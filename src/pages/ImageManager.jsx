@@ -37,7 +37,7 @@ const ImageManager = () => {
   const navigate = useNavigate();
   
   // 获取同步上下文
-  const { isInitialized, isSyncing, syncHistory } = useSync();
+  const { isInitialized, isSyncing, syncHistory, deleteHistoryRecord } = useSync();
   
   // 语言文本
   const texts = {
@@ -291,14 +291,33 @@ const ImageManager = () => {
   };
 
   // 删除记录
-  const deleteRecord = (index) => {
+  const deleteRecord = async (recordId) => {
+    // 如果启用了云同步，则调用专门的云端删除函数
+    if (settings.enableSync && isInitialized) {
+      const success = await deleteHistoryRecord(recordId);
+      if (success) {
+        // 云端删除成功后，更新本地UI
+        const newImages = images.filter(img => img.id !== recordId);
+        setImages(newImages);
+        applyFilters(searchText, dateRange, newImages); // 传递newImages确保基于最新数据筛选
+        message.success(t.deleteSuccess);
+      }
+      // 如果失败，deleteHistoryRecord内部会显示错误消息
+      return;
+    }
+
+    // --- Fallback for local-only mode ---
+    // 找到要删除的图片在当前列表中的索引
+    const recordIndex = images.findIndex(img => img.id === recordId);
+    if (recordIndex === -1) return;
+
     const newImages = [...images];
-    newImages.splice(index, 1);
+    newImages.splice(recordIndex, 1);
     setImages(newImages);
     localStorage.setItem('upload-history', JSON.stringify(newImages));
     
     // 更新筛选后的图片
-    applyFilters(searchText, dateRange);
+    applyFilters(searchText, dateRange, newImages);
     
     message.success(t.deleteSuccess);
   };
@@ -371,7 +390,7 @@ const ImageManager = () => {
               <Popconfirm
                 title={t.deleteConfirmTitle}
                 description={t.deleteConfirmDesc}
-                onConfirm={() => deleteRecord(images.findIndex(img => img.date === image.date && img.name === image.name))}
+                onConfirm={() => deleteRecord(image.id)}
                 okText={t.confirm}
                 cancelText={t.cancel}
                 key="delete"
@@ -452,7 +471,7 @@ const ImageManager = () => {
                     <Popconfirm
                       title={t.deleteConfirmTitle}
                       description={t.deleteConfirmDesc}
-                      onConfirm={() => deleteRecord(images.findIndex(img => img.date === item.date && img.name === item.name))}
+                      onConfirm={() => deleteRecord(item.id)}
                       okText={t.confirm}
                       cancelText={t.cancel}
                     >

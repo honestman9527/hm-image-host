@@ -168,46 +168,101 @@ export const SyncProvider = ({ children }) => {
     }
   }, [syncState]);
 
-  // 重新同步所有数据
-  const resyncAll = useCallback(async () => {
+  // 从Gist删除单条历史记录
+  const deleteHistoryRecord = useCallback(async (recordId) => {
     const { octokit, gistId, isInitialized } = syncState;
-    
+
     if (!isInitialized || !octokit || !gistId) {
       return false;
     }
-    
+
     setSyncState(prev => ({ ...prev, isSyncing: true }));
-    
+
     try {
-      // 获取本地数据
-      const localSettings = JSON.parse(localStorage.getItem('github-settings') || '{}');
-      const localHistory = JSON.parse(localStorage.getItem('upload-history') || '[]');
+      // 1. 从Gist拉取当前的历史记录
+      const existingHistory = await loadHistoryFromGist(octokit, gistId);
+
+      // 2. 过滤掉要删除的记录
+      const updatedHistory = existingHistory.filter(record => record.id !== recordId);
+
+      // 3. 将更新后的历史推送到Gist
+      await saveHistoryToGist(octokit, gistId, updatedHistory);
       
-      // 确保移除令牌信息再同步
-      const settingsToSync = { ...localSettings };
-      delete settingsToSync.token;
-      
-      // 保存到Gist
-      await saveSettingsToGist(octokit, gistId, settingsToSync);
-      await saveHistoryToGist(octokit, gistId, localHistory);
-      
-      // 更新同步状态
+      // 4. 更新本地存储
+      localStorage.setItem('upload-history', JSON.stringify(updatedHistory));
+
       setSyncState(prev => ({
         ...prev,
         isSyncing: false,
         lastSynced: new Date(),
       }));
-      
-      message.success('所有数据已同步到云端');
+
       return true;
     } catch (error) {
-      console.error('重新同步失败:', error);
+      console.error('删除云端历史记录失败:', error);
       setSyncState(prev => ({
         ...prev,
         isSyncing: false,
-        error: error.message || '重新同步失败',
+        error: error.message || '删除云端历史记录失败',
       }));
-      message.error(`重新同步失败: ${error.message}`);
+      message.error(`删除云端记录失败: ${error.message}`);
+      return false;
+    }
+  }, [syncState]);
+
+  // 从云端拉取数据并覆盖本地
+  const pullFromGist = useCallback(async () => {
+    const { octokit, gistId, isInitialized, lastSynced } = syncState;
+    if (!isInitialized || !octokit || !gistId) return false;
+
+    setSyncState(prev => ({ ...prev, isSyncing: true }));
+    try {
+      const gistSettings = await loadSettingsFromGist(octokit, gistId);
+      const gistHistory = await loadHistoryFromGist(octokit, gistId);
+
+      if (gistSettings) {
+        const currentSettings = JSON.parse(localStorage.getItem('github-settings') || '{}');
+        const mergedSettings = { ...gistSettings, token: currentSettings.token };
+        localStorage.setItem('github-settings', JSON.stringify(mergedSettings));
+      }
+      if (gistHistory) {
+        localStorage.setItem('upload-history', JSON.stringify(gistHistory));
+      }
+
+      setSyncState(prev => ({ ...prev, isSyncing: false, lastSynced: new Date() }));
+      message.success('已从云端恢复数据');
+      return true;
+    } catch (error) {
+      console.error('从云端拉取数据失败:', error);
+      setSyncState(prev => ({ ...prev, isSyncing: false, error: error.message }));
+      message.error(`拉取失败: ${error.message}`);
+      return false;
+    }
+  }, [syncState]);
+
+  // 将本地数据推送到云端
+  const pushToGist = useCallback(async () => {
+    const { octokit, gistId, isInitialized } = syncState;
+    if (!isInitialized || !octokit || !gistId) return false;
+
+    setSyncState(prev => ({ ...prev, isSyncing: true }));
+    try {
+      const localSettings = JSON.parse(localStorage.getItem('github-settings') || '{}');
+      const localHistory = JSON.parse(localStorage.getItem('upload-history') || '[]');
+      
+      const settingsToSync = { ...localSettings };
+      delete settingsToSync.token;
+      
+      await saveSettingsToGist(octokit, gistId, settingsToSync);
+      await saveHistoryToGist(octokit, gistId, localHistory);
+
+      setSyncState(prev => ({ ...prev, isSyncing: false, lastSynced: new Date() }));
+      message.success('本地数据已上传至云端');
+      return true;
+    } catch (error) {
+      console.error('推送到云端失败:', error);
+      setSyncState(prev => ({ ...prev, isSyncing: false, error: error.message }));
+      message.error(`推送失败: ${error.message}`);
       return false;
     }
   }, [syncState]);
@@ -218,7 +273,9 @@ export const SyncProvider = ({ children }) => {
     initializeSync,
     syncSettings,
     syncHistory,
-    resyncAll,
+    deleteHistoryRecord,
+    pullFromGist,
+    pushToGist,
   };
 
   return (

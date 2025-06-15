@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Typography, Form, Input, Button, Card, message, Alert, Switch, Radio, Spin, Divider, Badge, Modal, Row, Col } from 'antd';
+import { Typography, Form, Input, Button, Card, message, Alert, Switch, Radio, Spin, Divider, Badge, Modal, Row, Col, Popconfirm } from 'antd';
 import { 
   GithubOutlined, LinkOutlined, SaveOutlined, QuestionCircleOutlined, GlobalOutlined, 
-  CloudSyncOutlined, CloudUploadOutlined, ArrowLeftOutlined, PlusOutlined, EditOutlined, DeleteOutlined, CheckCircleOutlined 
+  CloudSyncOutlined, CloudUploadOutlined, ArrowLeftOutlined, PlusOutlined, EditOutlined, DeleteOutlined, CheckCircleOutlined, CloudDownloadOutlined
 } from '@ant-design/icons';
 import { Octokit } from '@octokit/rest';
 import { useSync } from '../contexts/SyncContext';
@@ -65,7 +65,8 @@ const Settings = () => {
     error: syncError, 
     initializeSync, 
     syncSettings, 
-    resyncAll 
+    pullFromGist,
+    pushToGist
   } = useSync();
   
   // 语言文本
@@ -137,7 +138,10 @@ const Settings = () => {
       syncSettings: '云同步设置',
       enableSync: '启用云同步',
       enableSyncExtra: '启用后，您的设置和上传历史将保存在GitHub Gist中，可在多设备间同步',
-      syncNow: '立即同步',
+      pullFromCloud: '从云端恢复',
+      pullFromCloudTooltip: '用云端的数据覆盖本地的所有配置和历史记录。此操作不可逆。',
+      pushToCloud: '上传到云端',
+      pushToCloudTooltip: '用本地的所有配置和历史记录覆盖云端数据。此操作不可逆。',
       syncStatus: '同步状态',
       syncInitialized: '已初始化',
       syncNotInitialized: '未初始化',
@@ -216,7 +220,10 @@ const Settings = () => {
       syncSettings: 'Cloud Sync Settings',
       enableSync: 'Enable Cloud Sync',
       enableSyncExtra: 'When enabled, your settings and upload history will be saved in GitHub Gist for multi-device sync',
-      syncNow: 'Sync Now',
+      pullFromCloud: 'Pull from Cloud',
+      pullFromCloudTooltip: 'Overwrite local data with data from the cloud. This is irreversible.',
+      pushToCloud: 'Push to Cloud',
+      pushToCloudTooltip: 'Overwrite cloud data with local data. This is irreversible.',
       syncStatus: 'Sync Status',
       syncInitialized: 'Initialized',
       syncNotInitialized: 'Not Initialized',
@@ -249,8 +256,12 @@ const Settings = () => {
       console.log('从Cloudflare Pages环境变量获取到token');
       // 仅在内存中保存token，不存储到localStorage
       setToken(cfToken);
+      // 如果开启了同步，自动初始化
+      if(settings.enableSync) {
+        initializeSync(cfToken);
+      }
     }
-  }, []);
+  }, [settings.enableSync]);
 
   // 持久化设置的通用函数
   const persistSettings = async (newSettings) => {
@@ -400,6 +411,22 @@ const Settings = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePullFromGist = async () => {
+    setLoading(true);
+    const success = await pullFromGist();
+    if (success) {
+      message.info('数据已更新，页面即将刷新...');
+      setTimeout(() => window.location.reload(), 1500);
+    }
+    setLoading(false);
+  };
+
+  const handlePushToGist = async () => {
+    setLoading(true);
+    await pushToGist();
+    setLoading(false);
   };
 
   // 测试GitHub连接
@@ -639,16 +666,36 @@ const Settings = () => {
               )}
             </div>
             
-            <Button 
-              type="primary" 
-              icon={<CloudUploadOutlined />}
-              onClick={handleManualSync}
-              loading={isSyncing}
-              disabled={!token || !settings.enableSync}
-              className="sync-button"
-            >
-              {isSyncing ? t.syncInProgress : t.syncNow}
-            </Button>
+            <div className="sync-actions">
+              <Popconfirm
+                title={t.pullFromCloud}
+                description={t.pullFromCloudTooltip}
+                onConfirm={handlePullFromGist}
+                okText={t.confirm}
+                cancelText={t.cancel}
+              >
+                <Button 
+                  icon={<CloudDownloadOutlined />}
+                  loading={isSyncing || loading}
+                >
+                  {t.pullFromCloud}
+                </Button>
+              </Popconfirm>
+              <Popconfirm
+                title={t.pushToCloud}
+                description={t.pushToCloudTooltip}
+                onConfirm={handlePushToGist}
+                okText={t.confirm}
+                cancelText={t.cancel}
+              >
+                <Button 
+                  icon={<CloudUploadOutlined />}
+                  loading={isSyncing || loading}
+                >
+                  {t.pushToCloud}
+                </Button>
+              </Popconfirm>
+            </div>
           </Card>
           
           <Card title={<><GlobalOutlined /> {t.languageSettings}</>} className="settings-card">
