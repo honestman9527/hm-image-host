@@ -121,7 +121,7 @@ export const SyncProvider = ({ children }) => {
   }, [syncState]);
 
   // 同步历史到Gist
-  const syncHistory = useCallback(async (history) => {
+  const syncHistory = useCallback(async (newHistoryRecord) => {
     const { octokit, gistId, isInitialized } = syncState;
     
     if (!isInitialized || !octokit || !gistId) {
@@ -131,7 +131,23 @@ export const SyncProvider = ({ children }) => {
     setSyncState(prev => ({ ...prev, isSyncing: true }));
     
     try {
-      await saveHistoryToGist(octokit, gistId, history);
+      // 1. 从Gist拉取当前的历史记录
+      const existingHistory = await loadHistoryFromGist(octokit, gistId);
+
+      // 2. 合并历史记录 (将新记录添加到最前面)
+      // 同时进行去重，防止因网络问题等意外情况重复添加
+      const newHistory = [...newHistoryRecord, ...existingHistory];
+      const uniqueHistory = newHistory.filter((record, index, self) =>
+        index === self.findIndex((r) => (
+          r.id === record.id || r.url === record.url // 使用id或url作为唯一标识
+        ))
+      );
+      
+      // 3. 将合并后的完整历史记录推送到Gist
+      await saveHistoryToGist(octokit, gistId, uniqueHistory);
+
+      // 4. (可选但推荐) 更新本地的`upload-history`为合并后的最新记录
+      localStorage.setItem('upload-history', JSON.stringify(uniqueHistory));
       
       setSyncState(prev => ({
         ...prev,
