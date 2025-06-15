@@ -1,0 +1,90 @@
+.app-layout {
+  min-height: 100vh;
+  background: transparent;
+}
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  background: var(--component-background);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-bottom: 1px solid var(--border-color);
+  padding: 0 24px;
+  transition: background 0.3s, border-color 0.3s;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  margin: 0 !important;
+  font-weight: 600;
+}
+
+.logo-image {
+  height: 32px;
+  width: 32px;
+  margin-right: 12px;
+  transition: transform 0.3s ease;
+}
+
+.logo-image:hover {
+  transform: rotate(-15deg);
+}
+
+.app-title {
+  color: var(--text-color) !important;
+  margin: 0 !important;
+  font-weight: 600;
+}
+
+.theme-button,
+.menu-button {
+  font-size: 20px;
+  color: var(--text-color) !important;
+  height: 40px;
+  width: 40px;
+  transition: color 0.3s;
+}
+
+.app-content {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-footer {
+  text-align: center;
+  background: transparent;
+  color: var(--text-color-secondary);
+  padding: 16px 50px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+@media (max-width: 380px) {
+  .app-title {
+    display: none;
+  }
+  
+  .app-header {
+    padding: 0 12px;
+  }
+}
