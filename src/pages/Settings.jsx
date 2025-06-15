@@ -253,15 +253,10 @@ const Settings = () => {
   useEffect(() => {
     const cfToken = import.meta.env.VITE_GITHUB_TOKEN;
     if (cfToken) {
-      console.log('从Cloudflare Pages环境变量获取到token');
       // 仅在内存中保存token，不存储到localStorage
       setToken(cfToken);
-      // 如果开启了同步，自动初始化
-      if(settings.enableSync) {
-        initializeSync(cfToken);
-      }
     }
-  }, [settings.enableSync]);
+  }, []);
 
   // 持久化设置的通用函数
   const persistSettings = async (newSettings) => {
