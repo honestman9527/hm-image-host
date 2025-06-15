@@ -88,3 +88,34 @@
     padding: 0 12px;
   }
 }
+
+.app-container .content {
+  flex-grow: 1;
+  padding: 20px;
+  overflow-y: auto;
+  transition: all 0.3s;
+  width: calc(100vw - 200px - 40px); /* 100vw - 侧边栏宽度 - 两边padding */
+}
+
+.app-container.collapsed .content {
+  width: calc(100vw - 80px - 40px); /* 100vw - 折叠后侧边栏宽度 - 两边padding */
+}
+
+@media (max-width: 768px) {
+  .app-container .sidebar {
+    transform: translateX(-100%);
+    position: absolute;
+    z-index: 1000;
+    height: 100%;
+  }
+
+  .app-container .content {
+    padding: 10px;
+    width: 100vw; /* 移动端占满全部视口宽度 */
+    margin-left: 0;
+  }
+  
+  .app-container.sidebar-open .sidebar {
+    transform: translateX(0);
+  }
+}
