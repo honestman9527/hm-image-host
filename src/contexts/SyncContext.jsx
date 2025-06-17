@@ -35,27 +35,28 @@ export const SyncProvider = ({ children }) => {
     try {
       // 初始化Gist同步
       const { octokit, gistId } = await initGistSync(token);
+      let settings = JSON.parse(localStorage.getItem('github-settings') || '{}');
       
       // 从Gist加载设置
       const gistSettings = await loadSettingsFromGist(octokit, gistId);
       if (gistSettings) {
-        // 合并设置，保留本地令牌但使用云端的其他设置
-        const currentSettings = JSON.parse(localStorage.getItem('github-settings') || '{}');
-        const mergedSettings = {
+        // 合并设置，Gist为准，但保留本地输入的token
+        settings = {
           ...gistSettings,
           token: token // 使用当前输入的token
         };
-        
-        localStorage.setItem('github-settings', JSON.stringify(mergedSettings));
+        localStorage.setItem('github-settings', JSON.stringify(settings));
       }
       
       // 首次初始化时，加载当前活动profile的历史记录
-      const activeProfileId = mergedSettings.activeProfileId;
+      const activeProfileId = settings.activeProfileId;
       if (activeProfileId) {
         const gistHistory = await loadHistoryFromGist(octokit, gistId, activeProfileId);
-        if (gistHistory) {
-          localStorage.setItem('upload-history', JSON.stringify(gistHistory));
-        }
+        // 即使Gist上没有历史文件，也用空数组覆盖本地，以确保一致性
+        localStorage.setItem('upload-history', JSON.stringify(gistHistory || []));
+      } else {
+        // 没有活动配置，确保本地历史为空
+        localStorage.setItem('upload-history', '[]');
       }
       
       // 更新同步状态

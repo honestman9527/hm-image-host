@@ -430,22 +430,6 @@ const Settings = () => {
     }
   };
 
-  const handlePullFromGist = async () => {
-    setLoading(true);
-    const success = await pullFromGist();
-    if (success) {
-      message.info('数据已更新，页面即将刷新...');
-      setTimeout(() => window.location.reload(), 1500);
-    }
-    setLoading(false);
-  };
-
-  const handlePushToGist = async () => {
-    setLoading(true);
-    await pushToGist();
-    setLoading(false);
-  };
-
   // 测试GitHub连接
   const testConnection = async () => {
     const values = await modalForm.validateFields();
@@ -684,34 +668,7 @@ const Settings = () => {
             </div>
             
             <div className="sync-actions">
-              <Popconfirm
-                title={t.pullFromCloud}
-                description={t.pullFromCloudTooltip}
-                onConfirm={handlePullFromGist}
-                okText={t.confirm}
-                cancelText={t.cancel}
-              >
-                <Button 
-                  icon={<CloudDownloadOutlined />}
-                  loading={isSyncing || loading}
-                >
-                  {t.pullFromCloud}
-                </Button>
-              </Popconfirm>
-              <Popconfirm
-                title={t.pushToCloud}
-                description={t.pushToCloudTooltip}
-                onConfirm={handlePushToGist}
-                okText={t.confirm}
-                cancelText={t.cancel}
-              >
-                <Button 
-                  icon={<CloudUploadOutlined />}
-                  loading={isSyncing || loading}
-                >
-                  {t.pushToCloud}
-                </Button>
-              </Popconfirm>
+              {/* Obsolete buttons are removed from here */}
             </div>
           </Card>
           
