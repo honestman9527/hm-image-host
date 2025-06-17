@@ -154,7 +154,6 @@
 }
 
 .image-container:hover::after {
-  content: '点击复制链接';
   position: absolute;
   background: rgba(0, 0, 0, 0.6);
   color: white;
@@ -278,7 +277,6 @@
 }
 
 .history-image-container:hover::after {
-  content: '点击复制链接';
   position: absolute;
   background: rgba(0, 0, 0, 0.6);
   color: white;

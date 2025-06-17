@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Typography, Form, Input, Button, Card, message, Alert, Switch, Radio, Spin, Divider, Badge, Modal, Row, Col, Popconfirm } from 'antd';
+import { Typography, Form, Input, Button, Card, message, Alert, Switch, Radio, Spin, Divider, Badge, Modal, Row, Col, Popconfirm, Tooltip, Popover, Space } from 'antd';
 import { 
   GithubOutlined, LinkOutlined, SaveOutlined, QuestionCircleOutlined, GlobalOutlined, 
-  CloudSyncOutlined, CloudUploadOutlined, ArrowLeftOutlined, PlusOutlined, EditOutlined, DeleteOutlined, CheckCircleOutlined, CloudDownloadOutlined
+  CloudSyncOutlined, CloudUploadOutlined, ArrowLeftOutlined, PlusOutlined, EditOutlined, DeleteOutlined, CheckCircleOutlined, CloudDownloadOutlined,
+  InfoCircleOutlined
 } from '@ant-design/icons';
 import { Octokit } from '@octokit/rest';
 import { useSync } from '../contexts/SyncContext';
@@ -536,83 +537,164 @@ const Settings = () => {
       >
         返回
       </Button>
-      <Title level={2} style={{ margin: 0 }}>{t.title}</Title>
+      <Title level={3} style={{ margin: 0 }}>{t.title}</Title>
+    </div>
+  );
+
+  // 生成配置卡片内容的函数
+  const renderProfileCardContent = (profile) => (
+    <div className="profile-card-content">
+      <div className="profile-info-row">
+        <Text strong>Repo:</Text> 
+        <Tooltip title={`${profile.owner}/${profile.repo}`}>
+          <Text ellipsis>{profile.owner}/{profile.repo}</Text>
+        </Tooltip>
+      </div>
+      <div className="profile-info-row">
+        <Text strong>Branch:</Text> 
+        <Text>{profile.branch}</Text>
+      </div>
+      <div className="profile-info-row">
+        <Text strong>Path:</Text> 
+        <Tooltip title={profile.path}>
+          <Text ellipsis>{profile.path}</Text>
+        </Tooltip>
+      </div>
+      {profile.customDomain && (
+        <div className="profile-info-row">
+          <Text strong>CDN:</Text> 
+          <Tooltip title={profile.customDomain}>
+            <Text ellipsis>{profile.customDomain}</Text>
+          </Tooltip>
+        </div>
+      )}
+      <div className="profile-card-actions">
+        {settings.activeProfileId === profile.id ? (
+          <Badge status="processing" text={t.active} />
+        ) : (
+          <Button 
+            size="small" 
+            onClick={() => handleSetActiveProfile(profile.id)}
+          >
+            {t.setActive}
+          </Button>
+        )}
+      </div>
     </div>
   );
 
   return (
     <div className="settings-container">
-      <Card title={pageTitle} bordered={false} className="settings-card-main">
+      <Card 
+        title={pageTitle} 
+        bordered={false} 
+        className="settings-card-main"
+        size="small"
+      >
         <Paragraph>{t.subtitle}</Paragraph>
-        <Divider />
-        <div className="settings-grid">
-          {/* GitHub 配置卡片 */}
-          <Card 
-            title={<><GithubOutlined /> {t.githubSettings}</>} 
-            className="settings-card"
-            extra={<Button icon={<PlusOutlined />} onClick={() => showProfileModal(null)}>{t.addRepoConfig}</Button>}
-            style={{ gridColumn: '1 / -1' }} // 占满整行
-          >
-            {!import.meta.env.VITE_GITHUB_TOKEN && (
-              <Alert
-                message="GitHub令牌未配置"
-                description="请联系管理员在Cloudflare Pages中配置VITE_GITHUB_TOKEN环境变量。"
-                type="warning"
-                showIcon
-                style={{ marginBottom: 16 }}
-              />
-            )}
-            
-            {import.meta.env.VITE_GITHUB_TOKEN && (
-              <Alert
-                message="GitHub令牌已配置"
-                description="令牌已从环境变量中加载，无需手动输入。"
-                type="success"
-                showIcon
-                style={{ marginBottom: 16 }}
-              />
-            )}
-
-            <Row gutter={[16, 16]}>
-              {settings.profiles.map(profile => (
-                <Col xs={24} sm={24} md={12} lg={8} key={profile.id}>
-                  <Card 
-                    className={`profile-card ${settings.activeProfileId === profile.id ? 'active-profile' : ''}`}
-                    title={profile.name}
-                    actions={[
-                      <Button type="text" icon={<EditOutlined />} onClick={() => showProfileModal(profile)}>{t.edit}</Button>,
-                      <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleDeleteProfile(profile.id)}>{t.delete}</Button>
-                    ]}
-                  >
-                    <div className="profile-card-content">
-                      <Paragraph>
-                        <Text strong>Repo:</Text> {profile.owner}/{profile.repo}
-                      </Paragraph>
-                      <Paragraph>
-                        <Text strong>Branch:</Text> {profile.branch}
-                      </Paragraph>
-                      <Paragraph>
-                        <Text strong>Path:</Text> {profile.path}
-                      </Paragraph>
-                      {profile.customDomain && (
-                        <Paragraph>
-                          <Text strong>CDN:</Text> {profile.customDomain}
-                        </Paragraph>
-                      )}
-                      {settings.activeProfileId === profile.id ? (
-                        <Button type="primary" icon={<CheckCircleOutlined />} disabled>{t.active}</Button>
-                      ) : (
-                        <Button onClick={() => handleSetActiveProfile(profile.id)}>{t.setActive}</Button>
-                      )}
-                    </div>
-                  </Card>
-                </Col>
-              ))}
-            </Row>
-          </Card>
+        
+        {/* GitHub 配置部分 */}
+        <div className="settings-section">
+          <div className="section-header">
+            <Title level={4}>
+              <GithubOutlined /> {t.githubSettings}
+            </Title>
+            <Button 
+              type="primary" 
+              icon={<PlusOutlined />} 
+              onClick={() => showProfileModal(null)}
+              size="small"
+            >
+              {t.addRepoConfig}
+            </Button>
+          </div>
           
-          {/* 其他设置卡片 */}
-          <Card title={<><CloudSyncOutlined /> {t.syncSettings}</>} className="settings-card">
+          {!import.meta.env.VITE_GITHUB_TOKEN && (
+            <Alert
+              message="GitHub令牌未配置"
+              description="请联系管理员在Cloudflare Pages中配置VITE_GITHUB_TOKEN环境变量。"
+              type="warning"
+              showIcon
+              style={{ marginBottom: 16 }}
+            />
+          )}
+          
+          {import.meta.env.VITE_GITHUB_TOKEN && (
+            <Alert
+              message="GitHub令牌已配置"
+              description="令牌已从环境变量中加载，无需手动输入。"
+              type="success"
+              showIcon
+              style={{ marginBottom: 16 }}
+            />
+          )}
+
+          <div className="profiles-grid">
+            {settings.profiles.map(profile => (
+              <Card 
+                key={profile.id}
+                className={`profile-card ${settings.activeProfileId === profile.id ? 'active-profile' : ''}`}
+                size="small"
+                title={
+                  <Tooltip title={profile.name}>
+                    <div className="profile-card-title">{profile.name}</div>
+                  </Tooltip>
+                }
+                extra={
+                  <Space>
+                    <Tooltip title={t.edit}>
+                      <Button 
+                        type="text" 
+                        icon={<EditOutlined />} 
+                        onClick={() => showProfileModal(profile)}
+                        size="small"
+                      />
+                    </Tooltip>
+                    <Tooltip title={t.delete}>
+                      <Popconfirm
+                        title={t.deleteConfirm}
+                        onConfirm={() => handleDeleteProfile(profile.id)}
+                        okText="是"
+                        cancelText="否"
+                      >
+                        <Button 
+                          type="text" 
+                          danger 
+                          icon={<DeleteOutlined />}
+                          size="small" 
+                        />
+                      </Popconfirm>
+                    </Tooltip>
+                  </Space>
+                }
+              >
+                {renderProfileCardContent(profile)}
+              </Card>
+            ))}
+          </div>
+        </div>
+        
+        <Divider />
+        
+        {/* 其他设置部分 */}
+        <div className="settings-grid">
+          {/* 云同步设置 */}
+          <Card 
+            title={
+              <div className="card-title-with-info">
+                <CloudSyncOutlined /> {t.syncSettings}
+                <Popover 
+                  content={t.enableSyncExtra}
+                  title={t.syncSettings}
+                  trigger="hover"
+                >
+                  <InfoCircleOutlined className="info-icon" />
+                </Popover>
+              </div>
+            } 
+            className="settings-card"
+            size="small"
+          >
             <Form
               form={form}
               layout="vertical"
@@ -621,33 +703,21 @@ const Settings = () => {
                 enableSync: settings.enableSync,
               }}
             >
-            <Form.Item
-              name="enableSync"
-              valuePropName="checked"
-              extra={t.enableSyncExtra}
-            >
-              <Switch 
-                checkedChildren={t.enableSync} 
-                unCheckedChildren={t.enableSync}
-                onChange={handleSyncChange}
-                checked={settings.enableSync}
-              />
-            </Form.Item>
+              <Form.Item
+                name="enableSync"
+                valuePropName="checked"
+              >
+                <Switch 
+                  checkedChildren={t.enableSync} 
+                  unCheckedChildren={t.enableSync}
+                  onChange={handleSyncChange}
+                  checked={settings.enableSync}
+                />
+              </Form.Item>
             </Form>
             
-            <Alert
-              className="settings-alert"
-              message={t.syncPermissions}
-              description={t.syncPermissionsExtra}
-              type="info"
-              showIcon
-            />
-            
-            <Divider />
-            
-            <div className="sync-status">
+            <div className="sync-status-compact">
               <div className="sync-status-item">
-                <Text strong>{t.syncStatus}:</Text>
                 <Badge 
                   status={isInitialized ? 'success' : 'default'} 
                   text={isInitialized ? t.syncInitialized : t.syncNotInitialized} 
@@ -655,47 +725,65 @@ const Settings = () => {
               </div>
               
               <div className="sync-status-item">
-                <Text strong>{t.lastSynced}:</Text>
-                <Text>{lastSynced ? formatDateTime(lastSynced) : '-'}</Text>
+                <Tooltip title={lastSynced ? formatDateTime(lastSynced) : '-'}>
+                  <Text>{lastSynced ? '最近同步: ' + new Date(lastSynced).toLocaleDateString() : '-'}</Text>
+                </Tooltip>
               </div>
-              
-              {syncError && (
-                <div className="sync-status-item">
-                  <Text strong>{t.syncError}:</Text>
-                  <Text type="danger">{syncError}</Text>
-                </div>
-              )}
             </div>
             
-            <div className="sync-actions">
-              {/* Obsolete buttons are removed from here */}
-            </div>
+            {syncError && (
+              <Alert
+                message={t.syncError}
+                description={syncError}
+                type="error"
+                showIcon
+                className="sync-error-alert"
+              />
+            )}
           </Card>
           
-          <Card title={<><GlobalOutlined /> {t.languageSettings}</>} className="settings-card">
-            <Form.Item
-              label={t.languageLabel}
+          {/* 语言设置 */}
+          <Card 
+            title={<><GlobalOutlined /> {t.languageSettings}</>} 
+            className="settings-card"
+            size="small"
+          >
+            <Radio.Group 
+              onChange={handleLanguageChange} 
+              value={settings.language}
+              optionType="button" 
+              buttonStyle="solid"
+              className="language-selector"
             >
-              <Radio.Group onChange={handleLanguageChange} value={settings.language}>
-                <Radio value="zh">中文</Radio>
-                <Radio value="en">English</Radio>
-              </Radio.Group>
-            </Form.Item>
+              <Radio.Button value="zh">中文</Radio.Button>
+              <Radio.Button value="en">English</Radio.Button>
+            </Radio.Group>
           </Card>
           
-          <Card title={<><QuestionCircleOutlined /> {t.about}</>} className="settings-card">
+          {/* 关于信息 */}
+          <Card 
+            title={<><QuestionCircleOutlined /> {t.about}</>} 
+            className="settings-card"
+            size="small"
+          >
             <Paragraph>{t.aboutContent}</Paragraph>
             
-            <Paragraph>
-              <strong>{t.howToGetToken}</strong>
-              <ol>
-                <li>{t.tokenStep1} <a href="https://github.com/settings/tokens" target="_blank" rel="noopener noreferrer">{t.tokenStep1Link}</a></li>
-                <li>{t.tokenStep2}</li>
-                <li>{t.tokenStep3}</li>
-                <li>{t.tokenStep4}</li>
-                <li>{t.tokenStep5}</li>
-              </ol>
-            </Paragraph>
+            <Popover
+              content={
+                <ol className="token-steps">
+                  <li>{t.tokenStep1} <a href="https://github.com/settings/tokens" target="_blank" rel="noopener noreferrer">{t.tokenStep1Link}</a></li>
+                  <li>{t.tokenStep2}</li>
+                  <li>{t.tokenStep3}</li>
+                  <li>{t.tokenStep4}</li>
+                  <li>{t.tokenStep5}</li>
+                </ol>
+              }
+              title={t.howToGetToken}
+              trigger="click"
+              placement="bottom"
+            >
+              <Button type="link">{t.howToGetToken}</Button>
+            </Popover>
           </Card>
         </div>
       </Card>
@@ -703,7 +791,7 @@ const Settings = () => {
       {/* 新增/编辑配置的模态框 */}
       <Modal
         title={editingProfile ? t.editRepoConfig : t.addRepoConfig}
-        visible={isModalVisible}
+        open={isModalVisible}
         onCancel={handleCancelModal}
         footer={null}
         destroyOnClose
@@ -724,7 +812,7 @@ const Settings = () => {
             name="owner"
             label={t.owner}
             rules={[{ required: true, message: t.ownerRequired }]}
-            extra={t.ownerExtra}
+            tooltip={t.ownerExtra}
           >
             <Input placeholder={t.ownerPlaceholder} />
           </Form.Item>
@@ -732,7 +820,7 @@ const Settings = () => {
             name="repo"
             label={t.repo}
             rules={[{ required: true, message: t.repoRequired }]}
-            extra={t.repoExtra}
+            tooltip={t.repoExtra}
           >
             <Input placeholder={t.repoPlaceholder} />
           </Form.Item>
@@ -740,7 +828,7 @@ const Settings = () => {
             name="branch"
             label={t.branch}
             rules={[{ required: true, message: t.branchRequired }]}
-            extra={t.branchExtra}
+            tooltip={t.branchExtra}
           >
             <Input placeholder={t.branchPlaceholder} />
           </Form.Item>
@@ -748,45 +836,21 @@ const Settings = () => {
             name="path"
             label={t.path}
             rules={[{ required: true, message: t.pathRequired }]}
-            extra={t.pathExtra}
+            tooltip={t.pathExtra}
           >
             <Input placeholder={t.pathPlaceholder} />
           </Form.Item>
           <Form.Item
             name="customDomain"
             label={t.customDomain}
-            extra={t.customDomainExtra}
+            tooltip={t.customDomainExtra}
           >
             <Input placeholder={t.customDomainPlaceholder} />
           </Form.Item>
-
-          <Divider />
-
-          <Button 
-            type="default" 
-            onClick={testConnection} 
-            loading={testLoading}
-            style={{ marginBottom: 16 }}
-          >
-            {t.testConnection}
-          </Button>
           
-          {testResult && (
-            <Alert
-              className="settings-alert"
-              message={testResult.message}
-              type={testResult.success ? 'success' : 'error'}
-              showIcon
-            />
-          )}
-
-          <div style={{ textAlign: 'right', marginTop: '16px' }}>
-            <Button onClick={handleCancelModal} style={{ marginRight: 8 }}>
-              {t.cancel}
-            </Button>
-            <Button type="primary" htmlType="submit">
-              {t.saveChanges}
-            </Button>
+          <div className="modal-footer">
+            <Button onClick={handleCancelModal}>{t.cancel}</Button>
+            <Button type="primary" htmlType="submit" loading={loading}>{t.saveChanges}</Button>
           </div>
         </Form>
       </Modal>
