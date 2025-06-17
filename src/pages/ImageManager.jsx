@@ -20,24 +20,13 @@ const ImageManager = () => {
   const [dateRange, setDateRange] = useState(null);
   const [viewMode, setViewMode] = useState('grid');
   const [selectedFormat, setSelectedFormat] = useState('url');
-  const [settings, setSettings] = useState(() => {
-    const savedSettings = localStorage.getItem('github-settings');
-    return savedSettings ? JSON.parse(savedSettings) : {
-      token: '',
-      owner: '',
-      repo: '',
-      branch: 'main',
-      path: 'images',
-      customDomain: '',
-      language: 'zh', // 默认语言为中文
-      enableSync: false // 是否启用云同步
-    };
-  });
+  const [settings, setSettings] = useState(null);
+  const [activeProfile, setActiveProfile] = useState(null);
   
   const navigate = useNavigate();
   
   // 获取同步上下文
-  const { isInitialized, isSyncing, syncHistory, deleteHistoryRecord } = useSync();
+  const { isInitialized, isSyncing, deleteHistoryRecord } = useSync();
   
   // 语言文本
   const texts = {
@@ -116,70 +105,44 @@ const ImageManager = () => {
   };
   
   // 获取当前语言的文本
-  const t = texts[settings.language || 'zh'];
+  const t = texts[settings?.language || 'zh'];
   
   const pageSize = 12;
 
-  // 从本地存储加载图片 - 优化性能
+  // 加载设置和图片
   useEffect(() => {
-    // 使用异步操作避免阻塞主线程
-    const loadImages = async () => {
+    const loadData = () => {
+      // 加载设置
+      const savedSettings = localStorage.getItem('github-settings');
+      if (savedSettings) {
+        const parsed = JSON.parse(savedSettings);
+        setSettings(parsed);
+        const currentProfile = parsed.profiles?.find(p => p.id === parsed.activeProfileId) || null;
+        setActiveProfile(currentProfile);
+      }
+      
+      // 加载当前profile的图片历史
       try {
         const historyString = localStorage.getItem('upload-history') || '[]';
         const history = JSON.parse(historyString);
-        
-        // 按日期降序排序，最新的图片显示在前面
-        const sortedHistory = [...history].sort((a, b) => {
-          return new Date(b.date) - new Date(a.date);
-        });
-        
+        const sortedHistory = [...history].sort((a, b) => new Date(b.date) - new Date(a.date));
         setImages(sortedHistory);
         setFilteredImages(sortedHistory);
       } catch (error) {
-        console.error('Error loading images:', error);
+        console.error('加载图片历史记录失败:', error);
         message.error('加载图片历史记录失败');
         setImages([]);
         setFilteredImages([]);
       }
     };
     
-    loadImages();
+    loadData();
+    // 监听窗口焦点事件，以便从其他页面切换回来时能重新加载数据
+    window.addEventListener('focus', loadData);
+    return () => {
+      window.removeEventListener('focus', loadData);
+    };
   }, []);
-
-  // 从云端同步历史记录
-  const handleSyncFromCloud = async () => {
-    if (!settings.enableSync || !isInitialized) {
-      message.warning(t.cloudSyncDisabled);
-      return;
-    }
-    
-    try {
-      // 获取本地历史记录
-      const historyString = localStorage.getItem('upload-history') || '[]';
-      const history = JSON.parse(historyString);
-      
-      // 同步历史记录
-      await syncHistory(history);
-      
-      // 重新加载历史记录
-      const updatedHistoryString = localStorage.getItem('upload-history') || '[]';
-      const updatedHistory = JSON.parse(updatedHistoryString);
-      
-      // 按日期降序排序
-      const sortedHistory = [...updatedHistory].sort((a, b) => {
-        return new Date(b.date) - new Date(a.date);
-      });
-      
-      setImages(sortedHistory);
-      setFilteredImages(sortedHistory);
-      applyFilters(searchText, dateRange);
-      
-      message.success(t.syncSuccess);
-    } catch (error) {
-      console.error('同步失败:', error);
-      message.error(`${t.syncFailed}: ${error.message}`);
-    }
-  };
 
   // 搜索图片
   const handleSearch = (value) => {
@@ -292,33 +255,27 @@ const ImageManager = () => {
 
   // 删除记录
   const deleteRecord = async (recordId) => {
+    if (!activeProfile) return;
+    const profileId = activeProfile.id;
+
     // 如果启用了云同步，则调用专门的云端删除函数
-    if (settings.enableSync && isInitialized) {
-      const success = await deleteHistoryRecord(recordId);
+    if (settings?.enableSync && isInitialized) {
+      const success = await deleteHistoryRecord(recordId, profileId);
       if (success) {
-        // 云端删除成功后，更新本地UI
+        // deleteHistoryRecord 内部已经更新了localStorage, 这里只需更新UI
         const newImages = images.filter(img => img.id !== recordId);
         setImages(newImages);
-        applyFilters(searchText, dateRange, newImages); // 传递newImages确保基于最新数据筛选
+        setFilteredImages(newImages); // 直接用过滤后的新数组更新
         message.success(t.deleteSuccess);
       }
-      // 如果失败，deleteHistoryRecord内部会显示错误消息
       return;
     }
 
     // --- Fallback for local-only mode ---
-    // 找到要删除的图片在当前列表中的索引
-    const recordIndex = images.findIndex(img => img.id === recordId);
-    if (recordIndex === -1) return;
-
-    const newImages = [...images];
-    newImages.splice(recordIndex, 1);
+    const newImages = images.filter(img => img.id !== recordId);
     setImages(newImages);
+    setFilteredImages(newImages);
     localStorage.setItem('upload-history', JSON.stringify(newImages));
-    
-    // 更新筛选后的图片
-    applyFilters(searchText, dateRange, newImages);
-    
     message.success(t.deleteSuccess);
   };
 
@@ -547,16 +504,6 @@ const ImageManager = () => {
             <Radio.Button value="grid">{t.gridView}</Radio.Button>
             <Radio.Button value="timeline">{t.timelineView}</Radio.Button>
           </Radio.Group>
-          {settings.enableSync && (
-            <Button 
-              type="primary"
-              icon={<CloudSyncOutlined />}
-              onClick={handleSyncFromCloud}
-              loading={isSyncing}
-            >
-              {isSyncing ? t.syncingFromCloud : t.syncFromCloud}
-            </Button>
-          )}
         </div>
       </Card>
       {filteredImages.length === 0 ? (

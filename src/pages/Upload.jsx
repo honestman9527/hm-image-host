@@ -22,7 +22,7 @@ const UploadPage = () => {
   const [appSettings, setAppSettings] = useState(null);
 
   const navigate = useNavigate();
-  const { isInitialized, syncHistory } = useSync();
+  const { isInitialized, syncHistoryRecord } = useSync();
 
   useEffect(() => {
     // 封装加载逻辑，以便复用
@@ -242,16 +242,33 @@ const UploadPage = () => {
 
   // 保存上传历史
   const saveUploadHistory = (record) => {
-    const historyString = localStorage.getItem('upload-history') || '[]';
-    const history = JSON.parse(historyString);
-    const newHistory = [record, ...history];
-    localStorage.setItem('upload-history', JSON.stringify(newHistory));
-    
-    // 如果启用了云同步，只同步新增的记录
-    if (appSettings?.enableSync && isInitialized) {
-      syncHistory([record]).catch(error => {
-        console.error('同步历史记录失败:', error);
-      });
+    try {
+      const profileId = record.profileId;
+      if (!profileId) {
+        console.error('无法保存历史记录，因为缺少profileId');
+        return;
+      }
+
+      // 1. 读取本地存储中当前profile的历史记录
+      const localHistory = JSON.parse(localStorage.getItem('upload-history') || '[]');
+      
+      // 2. 将新记录添加到最前面
+      const newHistory = [record, ...localHistory];
+      
+      // 3. 保存回localStorage
+      localStorage.setItem('upload-history', JSON.stringify(newHistory));
+      
+      // 4. 如果启用了云同步，则异步更新Gist上的对应文件
+      if (appSettings?.enableSync && isInitialized) {
+        // 这个操作是"即发即弃"的，不阻塞UI，在后台同步
+        syncHistoryRecord(record, profileId).catch(error => {
+          // 这个错误通常不严重，只提示控制台即可
+          console.error('后台同步单条历史记录失败:', error);
+        });
+      }
+    } catch (error) {
+      console.error('保存上传历史到本地失败:', error);
+      message.error('保存历史记录时出错');
     }
   };
 

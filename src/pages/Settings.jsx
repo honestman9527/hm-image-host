@@ -65,8 +65,8 @@ const Settings = () => {
     error: syncError, 
     initializeSync, 
     syncSettings, 
-    pullFromGist,
-    pushToGist
+    switchActiveProfile,
+    deleteProfileHistory
   } = useSync();
   
   // 语言文本
@@ -327,13 +327,26 @@ const Settings = () => {
   };
 
   // 删除配置
-  const handleDeleteProfile = (profileId) => {
+  const handleDeleteProfile = async (profileId) => {
+    // 如果开启了云同步，也从Gist删除对应的历史文件
+    if (settings.enableSync && isInitialized) {
+      await deleteProfileHistory(profileId);
+    }
+    
     const newProfiles = settings.profiles.filter(p => p.id !== profileId);
     const newSettings = { ...settings, profiles: newProfiles };
     
     // 如果删除的是当前活动的配置
     if (settings.activeProfileId === profileId) {
-      newSettings.activeProfileId = newProfiles.length > 0 ? newProfiles[0].id : null;
+      const newActiveId = newProfiles.length > 0 ? newProfiles[0].id : null;
+      newSettings.activeProfileId = newActiveId;
+      // 如果有新的活动配置，则切换历史记录
+      if (newActiveId) {
+        await switchActiveProfile(newActiveId);
+      } else {
+        // 如果没有活动配置了，清空本地历史
+        localStorage.setItem('upload-history', '[]');
+      }
     }
     
     persistSettings(newSettings);
@@ -341,9 +354,18 @@ const Settings = () => {
   };
   
   // 设置活动配置
-  const handleSetActiveProfile = (profileId) => {
+  const handleSetActiveProfile = async (profileId) => {
     const newSettings = { ...settings, activeProfileId: profileId };
-    persistSettings(newSettings);
+    
+    // 如果启用了云同步，切换Gist上的历史记录
+    if (newSettings.enableSync && isInitialized) {
+      await switchActiveProfile(profileId);
+    } else {
+      // 如果未启用云同步，则清空本地历史记录以避免混淆
+      localStorage.setItem('upload-history', '[]');
+    }
+
+    await persistSettings(newSettings);
     message.success(t.profileSetActiveSuccess);
   };
   

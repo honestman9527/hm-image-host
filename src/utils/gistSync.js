@@ -3,16 +3,19 @@ import { Octokit } from '@octokit/rest';
 // 默认的Gist描述，用于识别图床配置Gist
 const GIST_DESCRIPTION = 'Image Hosting Pro Configuration';
 const CONFIG_FILENAME = 'image-hosting-config.json';
-const HISTORY_FILENAME = 'upload-history.json';
+// 不再使用单一历史文件名，而是动态生成
+// const HISTORY_FILENAME = 'upload-history.json';
+
+// 根据profileId生成历史文件名
+const getHistoryFilename = (profileId) => `history-${profileId}.json`;
 
 /**
  * 创建新的配置Gist
  * @param {Octokit} octokit - Octokit实例
  * @param {Object} settings - 设置对象
- * @param {Array} history - 上传历史
  * @returns {Promise<string>} - 返回创建的Gist ID
  */
-export async function createConfigGist(octokit, settings, history = []) {
+export async function createConfigGist(octokit, settings) {
   try {
     // 首先检查用户是否有gist权限
     try {
@@ -28,16 +31,13 @@ export async function createConfigGist(octokit, settings, history = []) {
     const settingsToSave = { ...settings };
     delete settingsToSave.token;
     
-    // 创建Gist
+    // 创建Gist，只包含配置文件
     const response = await octokit.gists.create({
       description: GIST_DESCRIPTION,
       public: false,
       files: {
         [CONFIG_FILENAME]: {
           content: JSON.stringify(settingsToSave, null, 2)
-        },
-        [HISTORY_FILENAME]: {
-          content: JSON.stringify(history, null, 2)
         }
       }
     });
@@ -112,19 +112,21 @@ export async function saveSettingsToGist(octokit, gistId, settings) {
  * @param {Octokit} octokit - Octokit实例
  * @param {string} gistId - Gist ID
  * @param {Array} history - 上传历史数组
+ * @param {string} profileId - 配置ID
  */
-export async function saveHistoryToGist(octokit, gistId, history) {
+export async function saveHistoryToGist(octokit, gistId, history, profileId) {
   try {
+    const filename = getHistoryFilename(profileId);
     await octokit.gists.update({
       gist_id: gistId,
       files: {
-        [HISTORY_FILENAME]: {
+        [filename]: {
           content: JSON.stringify(history, null, 2)
         }
       }
     });
   } catch (error) {
-    console.error('保存历史到Gist失败:', error);
+    console.error(`保存历史到Gist失败 (Profile: ${profileId}):`, error);
     throw error;
   }
 }
@@ -155,21 +157,50 @@ export async function loadSettingsFromGist(octokit, gistId) {
  * 从Gist加载上传历史
  * @param {Octokit} octokit - Octokit实例
  * @param {string} gistId - Gist ID
+ * @param {string} profileId - 配置ID
  * @returns {Promise<Array>} - 返回上传历史数组
  */
-export async function loadHistoryFromGist(octokit, gistId) {
+export async function loadHistoryFromGist(octokit, gistId, profileId) {
   try {
+    const filename = getHistoryFilename(profileId);
     const { data: gist } = await octokit.gists.get({
       gist_id: gistId
     });
     
-    if (gist.files && gist.files[HISTORY_FILENAME]) {
-      return JSON.parse(gist.files[HISTORY_FILENAME].content);
+    if (gist.files && gist.files[filename] && gist.files[filename].content) {
+      return JSON.parse(gist.files[filename].content);
     }
+    // 如果没有对应的历史文件，返回空数组
     return [];
   } catch (error) {
-    console.error('从Gist加载历史失败:', error);
+    console.error(`从Gist加载历史失败 (Profile: ${profileId}):`, error);
+    // 如果Gist本身不存在，也会抛错，这里返回空数组是安全的
+    if (error.status === 404) {
+      return [];
+    }
     throw error;
+  }
+}
+
+/**
+ * 从Gist中删除一个Profile的历史文件
+ * @param {Octokit} octokit - Octokit实例
+ * @param {string} gistId - Gist ID
+ * @param {string} profileId - 配置ID
+ */
+export async function deleteHistoryFromGist(octokit, gistId, profileId) {
+  try {
+    const filename = getHistoryFilename(profileId);
+    await octokit.gists.update({
+      gist_id: gistId,
+      files: {
+        [filename]: null // 将文件名设置为null来删除文件
+      }
+    });
+  } catch (error)
+  {
+    console.error(`删除Gist历史文件失败 (Profile: ${profileId}):`, error);
+    // 即使文件不存在或删除失败，也不应阻塞流程
   }
 }
 
@@ -192,14 +223,13 @@ export async function initGistSync(token) {
   if (!gistId) {
     // 获取本地设置和历史
     const localSettings = JSON.parse(localStorage.getItem('github-settings') || '{}');
-    const localHistory = JSON.parse(localStorage.getItem('upload-history') || '[]');
     
     // 移除令牌信息再保存到Gist
     const settingsToSave = { ...localSettings };
     delete settingsToSave.token;
     
-    // 创建新的Gist
-    gistId = await createConfigGist(octokit, settingsToSave, localHistory);
+    // 创建新的Gist，只包含设置文件，不包含历史
+    gistId = await createConfigGist(octokit, settingsToSave);
   }
   
   return { octokit, gistId };

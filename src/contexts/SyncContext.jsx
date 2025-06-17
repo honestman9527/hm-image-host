@@ -1,6 +1,13 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { message } from 'antd';
-import { initGistSync, loadSettingsFromGist, loadHistoryFromGist, saveSettingsToGist, saveHistoryToGist } from '../utils/gistSync';
+import { 
+  initGistSync, 
+  loadSettingsFromGist, 
+  loadHistoryFromGist, 
+  saveSettingsToGist, 
+  saveHistoryToGist,
+  deleteHistoryFromGist
+} from '../utils/gistSync';
 
 // 创建Context
 export const SyncContext = createContext();
@@ -42,10 +49,13 @@ export const SyncProvider = ({ children }) => {
         localStorage.setItem('github-settings', JSON.stringify(mergedSettings));
       }
       
-      // 从Gist加载历史
-      const gistHistory = await loadHistoryFromGist(octokit, gistId);
-      if (gistHistory && gistHistory.length > 0) {
-        localStorage.setItem('upload-history', JSON.stringify(gistHistory));
+      // 首次初始化时，加载当前活动profile的历史记录
+      const activeProfileId = mergedSettings.activeProfileId;
+      if (activeProfileId) {
+        const gistHistory = await loadHistoryFromGist(octokit, gistId, activeProfileId);
+        if (gistHistory) {
+          localStorage.setItem('upload-history', JSON.stringify(gistHistory));
+        }
       }
       
       // 更新同步状态
@@ -120,150 +130,85 @@ export const SyncProvider = ({ children }) => {
     }
   }, [syncState]);
 
-  // 同步历史到Gist
-  const syncHistory = useCallback(async (newHistoryRecord) => {
+  // 同步指定profile的单个历史记录
+  const syncHistoryRecord = useCallback(async (record, profileId) => {
     const { octokit, gistId, isInitialized } = syncState;
-    
-    if (!isInitialized || !octokit || !gistId) {
-      return false;
-    }
-    
-    setSyncState(prev => ({ ...prev, isSyncing: true }));
-    
+    if (!isInitialized || !octokit || !gistId) return false;
+
     try {
-      // 1. 从Gist拉取当前的历史记录
-      const existingHistory = await loadHistoryFromGist(octokit, gistId);
-
-      // 2. 合并历史记录 (将新记录添加到最前面)
-      // 同时进行去重，防止因网络问题等意外情况重复添加
-      const newHistory = [...newHistoryRecord, ...existingHistory];
-      const uniqueHistory = newHistory.filter((record, index, self) =>
-        index === self.findIndex((r) => (
-          r.id === record.id || r.url === record.url // 使用id或url作为唯一标识
-        ))
-      );
+      // 1. 获取当前profile在本地的历史
+      const localHistory = JSON.parse(localStorage.getItem('upload-history') || '[]');
       
-      // 3. 将合并后的完整历史记录推送到Gist
-      await saveHistoryToGist(octokit, gistId, uniqueHistory);
+      // 2. 将新记录添加到最前面
+      const newHistory = [record, ...localHistory];
 
-      // 4. (可选但推荐) 更新本地的`upload-history`为合并后的最新记录
-      localStorage.setItem('upload-history', JSON.stringify(uniqueHistory));
-      
-      setSyncState(prev => ({
-        ...prev,
-        isSyncing: false,
-        lastSynced: new Date(),
-      }));
+      // 3. 将合并后的历史推送到Gist
+      await saveHistoryToGist(octokit, gistId, newHistory, profileId);
       
       return true;
     } catch (error) {
-      console.error('同步历史失败:', error);
-      setSyncState(prev => ({
-        ...prev,
-        isSyncing: false,
-        error: error.message || '同步历史失败',
-      }));
-      message.error(`同步历史失败: ${error.message}`);
+      console.error('同步历史记录失败:', error);
+      message.error(`同步记录失败: ${error.message}`);
       return false;
     }
   }, [syncState]);
 
   // 从Gist删除单条历史记录
-  const deleteHistoryRecord = useCallback(async (recordId) => {
+  const deleteHistoryRecord = useCallback(async (recordId, profileId) => {
     const { octokit, gistId, isInitialized } = syncState;
-
-    if (!isInitialized || !octokit || !gistId) {
-      return false;
-    }
+    if (!isInitialized || !octokit || !gistId) return false;
 
     setSyncState(prev => ({ ...prev, isSyncing: true }));
-
     try {
-      // 1. 从Gist拉取当前的历史记录
-      const existingHistory = await loadHistoryFromGist(octokit, gistId);
-
-      // 2. 过滤掉要删除的记录
-      const updatedHistory = existingHistory.filter(record => record.id !== recordId);
-
-      // 3. 将更新后的历史推送到Gist
-      await saveHistoryToGist(octokit, gistId, updatedHistory);
+      const history = await loadHistoryFromGist(octokit, gistId, profileId);
+      const updatedHistory = history.filter(record => record.id !== recordId);
+      await saveHistoryToGist(octokit, gistId, updatedHistory, profileId);
       
-      // 4. 更新本地存储
+      // 更新本地存储
       localStorage.setItem('upload-history', JSON.stringify(updatedHistory));
 
-      setSyncState(prev => ({
-        ...prev,
-        isSyncing: false,
-        lastSynced: new Date(),
-      }));
-
+      setSyncState(prev => ({ ...prev, isSyncing: false, lastSynced: new Date() }));
       return true;
     } catch (error) {
       console.error('删除云端历史记录失败:', error);
-      setSyncState(prev => ({
-        ...prev,
-        isSyncing: false,
-        error: error.message || '删除云端历史记录失败',
-      }));
+      setSyncState(prev => ({ ...prev, isSyncing: false, error: error.message }));
       message.error(`删除云端记录失败: ${error.message}`);
       return false;
     }
   }, [syncState]);
 
-  // 从云端拉取数据并覆盖本地
-  const pullFromGist = useCallback(async () => {
-    const { octokit, gistId, isInitialized, lastSynced } = syncState;
-    if (!isInitialized || !octokit || !gistId) return false;
+  // 切换活动Profile时，从Gist加载对应的历史记录
+  const switchActiveProfile = useCallback(async (profileId) => {
+    const { octokit, gistId, isInitialized } = syncState;
+    if (!isInitialized || !octokit || !gistId) {
+      // 如果未初始化，则只清空本地历史
+      localStorage.setItem('upload-history', '[]');
+      return;
+    }
 
     setSyncState(prev => ({ ...prev, isSyncing: true }));
     try {
-      const gistSettings = await loadSettingsFromGist(octokit, gistId);
-      const gistHistory = await loadHistoryFromGist(octokit, gistId);
-
-      if (gistSettings) {
-        const currentSettings = JSON.parse(localStorage.getItem('github-settings') || '{}');
-        const mergedSettings = { ...gistSettings, token: currentSettings.token };
-        localStorage.setItem('github-settings', JSON.stringify(mergedSettings));
-      }
-      if (gistHistory) {
-        localStorage.setItem('upload-history', JSON.stringify(gistHistory));
-      }
-
-      setSyncState(prev => ({ ...prev, isSyncing: false, lastSynced: new Date() }));
-      message.success('已从云端恢复数据');
-      return true;
+      const history = await loadHistoryFromGist(octokit, gistId, profileId);
+      localStorage.setItem('upload-history', JSON.stringify(history));
+      setSyncState(prev => ({ ...prev, isSyncing: false }));
+      message.success(`已切换到配置，并同步历史记录`);
     } catch (error) {
-      console.error('从云端拉取数据失败:', error);
+      console.error(`切换配置历史失败 (Profile: ${profileId}):`, error);
       setSyncState(prev => ({ ...prev, isSyncing: false, error: error.message }));
-      message.error(`拉取失败: ${error.message}`);
-      return false;
+      message.error(`切换配置失败: ${error.message}`);
     }
   }, [syncState]);
-
-  // 将本地数据推送到云端
-  const pushToGist = useCallback(async () => {
+  
+  // 删除某个Profile的所有历史记录
+  const deleteProfileHistory = useCallback(async (profileId) => {
     const { octokit, gistId, isInitialized } = syncState;
-    if (!isInitialized || !octokit || !gistId) return false;
+    if (!isInitialized || !octokit || !gistId) return;
 
-    setSyncState(prev => ({ ...prev, isSyncing: true }));
     try {
-      const localSettings = JSON.parse(localStorage.getItem('github-settings') || '{}');
-      const localHistory = JSON.parse(localStorage.getItem('upload-history') || '[]');
-      
-      const settingsToSync = { ...localSettings };
-      delete settingsToSync.token;
-      
-      await saveSettingsToGist(octokit, gistId, settingsToSync);
-      await saveHistoryToGist(octokit, gistId, localHistory);
-
-      setSyncState(prev => ({ ...prev, isSyncing: false, lastSynced: new Date() }));
-      message.success('本地数据已上传至云端');
-      return true;
+      await deleteHistoryFromGist(octokit, gistId, profileId);
     } catch (error) {
-      console.error('推送到云端失败:', error);
-      setSyncState(prev => ({ ...prev, isSyncing: false, error: error.message }));
-      message.error(`推送失败: ${error.message}`);
-      return false;
+      console.error(`删除Profile历史文件失败:`, error);
+      message.error(`删除云端历史文件失败`);
     }
   }, [syncState]);
 
@@ -272,10 +217,10 @@ export const SyncProvider = ({ children }) => {
     ...syncState,
     initializeSync,
     syncSettings,
-    syncHistory,
+    syncHistoryRecord,
     deleteHistoryRecord,
-    pullFromGist,
-    pushToGist,
+    switchActiveProfile,
+    deleteProfileHistory,
   };
 
   return (
