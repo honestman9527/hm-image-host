@@ -484,18 +484,18 @@ const ImageManager = () => {
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             onSearch={handleSearch}
-            style={{ maxWidth: 260, flex: 1 }}
+            style={{ minWidth: 220, flex: 1 }}
             allowClear
           />
           <RangePicker 
             onChange={handleDateRangeChange} 
             value={dateRange}
             placeholder={[t.startDate, t.endDate]}
-            style={{ minWidth: 220 }}
+            style={{  }}
           />
           <Button onClick={clearFilters}>{t.clearFilters}</Button>
           <Dropdown overlay={linkFormatMenu} trigger={['click']}>
-            <Button style={{ minWidth: 140, marginLeft: 8 }}>
+            <Button style={{ minWidth: 140 }}>
               {texts.zh[selectedFormat + 'Format'] || t.urlFormat} <DownOutlined />
             </Button>
           </Dropdown>
