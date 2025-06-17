@@ -137,19 +137,22 @@ export const SyncProvider = ({ children }) => {
     if (!isInitialized || !octokit || !gistId) return false;
 
     try {
-      // 1. 获取当前profile在本地的历史
-      const localHistory = JSON.parse(localStorage.getItem('upload-history') || '[]');
+      // 1. 从Gist拉取对应profile的历史
+      const remoteHistory = await loadHistoryFromGist(octokit, gistId, profileId);
       
-      // 2. 将新记录添加到最前面
-      const newHistory = [record, ...localHistory];
+      // 2. 将新记录添加到最前面，并去重
+      const newHistory = [record, ...remoteHistory];
+      const uniqueHistory = newHistory.filter((r, index, self) =>
+        index === self.findIndex((item) => item.id === r.id)
+      );
 
       // 3. 将合并后的历史推送到Gist
-      await saveHistoryToGist(octokit, gistId, newHistory, profileId);
+      await saveHistoryToGist(octokit, gistId, uniqueHistory, profileId);
       
       return true;
     } catch (error) {
-      console.error('同步历史记录失败:', error);
-      message.error(`同步记录失败: ${error.message}`);
+      console.error('后台同步历史记录失败:', error);
+      // 后台任务失败，不弹出message干扰用户
       return false;
     }
   }, [syncState]);
@@ -190,7 +193,18 @@ export const SyncProvider = ({ children }) => {
     setSyncState(prev => ({ ...prev, isSyncing: true }));
     try {
       const history = await loadHistoryFromGist(octokit, gistId, profileId);
-      localStorage.setItem('upload-history', JSON.stringify(history));
+      
+      // 优化：去重，修复可能已损坏的云端数据
+      const uniqueHistory = history.filter((r, index, self) =>
+        index === self.findIndex((item) => item.id === r.id)
+      );
+
+      // 如果数据被清理过，则将干净的数据写回Gist
+      if (uniqueHistory.length < history.length) {
+        await saveHistoryToGist(octokit, gistId, uniqueHistory, profileId);
+      }
+      
+      localStorage.setItem('upload-history', JSON.stringify(uniqueHistory));
       setSyncState(prev => ({ ...prev, isSyncing: false }));
       message.success(`已切换到配置，并同步历史记录`);
     } catch (error) {
