@@ -22,6 +22,18 @@
   position: relative;
 }
 
+.settings-subtitle {
+  text-align: center;
+  margin: 0 auto 24px;
+  max-width: 80%;
+  padding-top: 16px;
+}
+
+.add-config-button-wrapper {
+  margin-left: 16px;
+  margin-bottom: 16px;
+}
+
 .settings-header {
   margin-bottom: 24px;
   text-align: center;

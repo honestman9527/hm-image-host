@@ -14,10 +14,12 @@ function App() {
   const navigate = useNavigate();
   const { theme: currentTheme, toggleTheme } = useTheme();
   const { isInitialized, initializeSync } = useSync()
+  const [pageTitle, setPageTitle] = useState('GitHub图床');
 
   // 文本变量
   const t = {
     title: 'HM 图床',
+    upload: '上传图片',
     imageManager: '图片管理',
     settings: '设置',
     footer: 'HM 图床 ©{year} Created with React & Ant Design'
@@ -36,6 +38,24 @@ function App() {
       }
     }
   }, [isInitialized, initializeSync]);
+
+  // 根据当前路径设置页面标题
+  useEffect(() => {
+    switch (location.pathname) {
+      case '/':
+        setPageTitle(t.upload);
+        break;
+      case '/images':
+        setPageTitle(t.imageManager);
+        break;
+      case '/settings':
+        setPageTitle(t.settings);
+        break;
+      default:
+        setPageTitle(t.title);
+        break;
+    }
+  }, [location.pathname, t]);
 
   const menuItems = [
     {
@@ -87,6 +107,9 @@ function App() {
               <img src="/hm.png" alt="logo" className="logo-image" />
             </Link>
             <Title level={4} className="app-title">{t.title}</Title>
+          </div>
+          <div className="page-title-container">
+            <Title level={4} className="page-title">{pageTitle}</Title>
           </div>
           <Space>
             <Button 

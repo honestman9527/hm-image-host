@@ -124,11 +124,16 @@
 }
 
 .empty-container {
-  margin: 40px 0;
-  padding: 24px;
-  background-color: #fafafa;
+  margin: 32px auto;
+  padding: 32px;
+  max-width: 90%;
   border-radius: 4px;
   text-align: center;
+}
+
+.theme-adaptive-empty {
+  background-color: var(--component-background) !important;
+  border: 1px solid var(--border-color) !important;
 }
 
 /* 网格视图样式 */

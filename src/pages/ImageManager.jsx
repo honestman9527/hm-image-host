@@ -427,7 +427,7 @@ const ImageManager = () => {
           onClick={() => navigate('/')}
           className="back-button"
         />
-        <Paragraph style={{ textAlign: 'center' }}>{t.subtitle}</Paragraph>
+        <Paragraph style={{ textAlign: 'center' , margin: 24 , paddingTop: 16 }}>{t.subtitle}</Paragraph>
         <div className="controls-container-row">
           <Search
             placeholder={t.search}
@@ -441,7 +441,7 @@ const ImageManager = () => {
             onChange={handleDateRangeChange} 
             value={dateRange}
             placeholder={[t.startDate, t.endDate]}
-            style={{  }}
+            style={{ minWidth: 220, flex: 1 }}
           />
           <Button onClick={clearFilters}>{t.clearFilters}</Button>
           <Dropdown overlay={linkFormatMenu} trigger={['click']}>
@@ -449,7 +449,7 @@ const ImageManager = () => {
               {t[selectedFormat + 'Format'] || t.urlFormat} <DownOutlined />
             </Button>
           </Dropdown>
-          <div style={{ flex: 1, minWidth: '12px' }} />
+          <div style={{ flex: 1, minWidth: 12 }} />
           <Radio.Group value={viewMode} onChange={handleViewModeChange} buttonStyle="solid" style={{ marginRight: 'auto' }}>
             <Radio.Button value="grid">{t.gridView}</Radio.Button>
             <Radio.Button value="timeline">{t.timelineView}</Radio.Button>
@@ -463,7 +463,7 @@ const ImageManager = () => {
               {images.length === 0 ? t.noImages : t.noMatchingImages}
             </span>
           }
-          className="empty-container"
+          className="empty-container theme-adaptive-empty"
         />
       ) : (
         viewMode === 'grid' ? renderGridView() : renderTimelineView()

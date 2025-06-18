@@ -503,7 +503,7 @@ const Settings = () => {
           onClick={() => navigate('/')}
           className="back-button"
         />
-        <Paragraph>{t.subtitle}</Paragraph>
+        <Paragraph className="settings-subtitle">{t.subtitle}</Paragraph>
         
         {/* GitHub 配置部分 */}
         <div className="settings-section">
@@ -511,6 +511,8 @@ const Settings = () => {
             <Title level={4}>
               <GithubOutlined /> {t.githubSettings}
             </Title>
+          </div>
+          <div className="add-config-button-wrapper">
             <Button 
               type="primary" 
               icon={<PlusOutlined />} 
