@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Typography, Form, Input, Button, Card, message, Alert, Switch, Radio, Spin, Divider, Badge, Modal, Row, Col, Popconfirm, Tooltip, Popover, Space } from 'antd';
+import { Typography, Form, Input, Button, Card, message, Alert, Switch, Spin, Divider, Badge, Modal, Row, Col, Popconfirm, Tooltip, Popover, Space } from 'antd';
 import { 
-  GithubOutlined, LinkOutlined, SaveOutlined, QuestionCircleOutlined, GlobalOutlined, 
+  GithubOutlined, LinkOutlined, SaveOutlined, QuestionCircleOutlined, 
   CloudSyncOutlined, CloudUploadOutlined, ArrowLeftOutlined, PlusOutlined, EditOutlined, DeleteOutlined, CheckCircleOutlined, CloudDownloadOutlined,
   InfoCircleOutlined
 } from '@ant-design/icons';
@@ -27,7 +27,6 @@ const migrateSettings = (savedSettings) => {
     return {
       profiles: [defaultProfile],
       activeProfileId: defaultProfile.id,
-      language: savedSettings.language || 'zh',
       enableSync: savedSettings.enableSync || false,
     };
   }
@@ -53,7 +52,6 @@ const Settings = () => {
     return migrated || {
       profiles: [],
       activeProfileId: null,
-      language: 'zh',
       enableSync: false
     };
   });
@@ -71,181 +69,91 @@ const Settings = () => {
   } = useSync();
   
   // 语言文本
-  const texts = {
-    zh: {
-      title: '设置',
-      subtitle: '配置您的GitHub仓库信息和自定义CDN链接',
-      githubSettings: 'GitHub仓库配置',
-      repoConfigs: '仓库配置列表',
-      addRepoConfig: '添加配置',
-      editRepoConfig: '编辑配置',
-      configName: '配置名称',
-      configNamePlaceholder: '例如：个人博客图床',
-      configNameRequired: '请输入配置名称',
-      active: '当前使用',
-      setActive: '设为当前',
-      edit: '编辑',
-      delete: '删除',
-      deleteConfirm: '确定要删除此配置吗？',
-      token: 'GitHub访问令牌',
-      tokenRequired: '请输入GitHub访问令牌',
-      tokenExtra: '需要具有repo和gist权限的个人访问令牌（Personal Access Token）',
-      tokenPlaceholder: '输入GitHub访问令牌',
-      owner: '仓库所有者 (可选)',
-      ownerRequired: '请输入仓库所有者',
-      ownerExtra: '您的GitHub用户名或组织名称，如果仅用于同步设置，可以留空',
-      ownerPlaceholder: '输入仓库所有者 (可选)',
-      repo: '仓库名称 (可选)',
-      repoRequired: '请输入仓库名称',
-      repoExtra: '用于存储图片的GitHub仓库名称，如果仅用于同步设置，可以留空',
-      repoPlaceholder: '输入仓库名称 (可选)',
-      branch: '分支名称',
-      branchRequired: '请输入分支名称',
-      branchExtra: '存储图片的分支，通常为main或master',
-      branchPlaceholder: '输入分支名称',
-      path: '存储路径',
-      pathRequired: '请输入存储路径',
-      pathExtra: '仓库中存储图片的目录路径，不需要前导斜杠',
-      pathPlaceholder: '输入存储路径',
-      testConnection: '测试连接',
-      cdnSettings: 'CDN设置',
-      customDomain: '自定义CDN域名',
-      customDomainExtra: '可选，用于替代GitHub原始链接的自定义CDN域名，例如：https://cdn.example.com',
-      customDomainPlaceholder: '输入自定义CDN域名（可选）',
-      saveSettings: '保存设置',
-      saveChanges: '保存更改',
-      cancel: '取消',
-      about: '关于GitHub图床',
-      aboutContent: '本工具使用GitHub仓库作为图片存储空间，通过GitHub API上传图片并生成可用于博客的链接。',
-      howToGetToken: '如何获取GitHub访问令牌：',
-      tokenStep1: '访问',
-      tokenStep1Link: 'GitHub令牌设置页面',
-      tokenStep2: '点击 "Generate new token" (生成新令牌)',
-      tokenStep3: '选择 "repo" 和 "gist" 权限范围（必须同时选择这两项权限）',
-      tokenStep4: '生成并复制令牌',
-      tokenStep5: '将令牌粘贴到上方的GitHub访问令牌输入框中',
-      languageSettings: '语言设置',
-      languageLabel: '界面语言',
-      errorMessage: '请先填写GitHub令牌、所有者和仓库名',
-      connectionSuccess: '连接成功！您的GitHub设置正常工作',
-      branchNotExist: '分支 "{branch}" 不存在，请创建此分支或使用现有分支',
-      connectionFailed: '连接失败: {error}',
-      saveSuccess: '设置已保存',
-      saveFailed: '保存设置失败',
-      profileSaveSuccess: '配置已保存',
-      profileSaveFailed: '配置保存失败',
-      profileDeleteSuccess: '配置已删除',
-      profileSetActiveSuccess: '已切换活动配置',
-      syncSettings: '云同步设置',
-      enableSync: '启用云同步',
-      enableSyncExtra: '启用后，您的设置和上传历史将保存在GitHub Gist中，可在多设备间同步',
-      pullFromCloud: '从云端恢复',
-      pullFromCloudTooltip: '用云端的数据覆盖本地的所有配置和历史记录。此操作不可逆。',
-      pushToCloud: '上传到云端',
-      pushToCloudTooltip: '用本地的所有配置和历史记录覆盖云端数据。此操作不可逆。',
-      syncStatus: '同步状态',
-      syncInitialized: '已初始化',
-      syncNotInitialized: '未初始化',
-      lastSynced: '上次同步时间',
-      syncError: '同步错误',
-      syncInProgress: '正在同步...',
-      syncSuccess: '同步成功',
-      syncRequired: '需要同步',
-      syncPermissions: '需要gist权限',
-      syncPermissionsExtra: '确保您的GitHub令牌具有gist权限，以便使用云同步功能。如果遇到"Not Found"错误，请检查您的令牌是否有gist权限。'
-    },
-    en: {
-      title: 'Settings',
-      subtitle: 'Configure your GitHub repository information and custom CDN links',
-      githubSettings: 'GitHub Repository Configurations',
-      repoConfigs: 'Repository Configuration List',
-      addRepoConfig: 'Add Configuration',
-      editRepoConfig: 'Edit Configuration',
-      configName: 'Configuration Name',
-      configNamePlaceholder: 'e.g., Personal Blog Images',
-      configNameRequired: 'Please enter a configuration name',
-      active: 'Active',
-      setActive: 'Set as Active',
-      edit: 'Edit',
-      delete: 'Delete',
-      deleteConfirm: 'Are you sure you want to delete this configuration?',
-      token: 'GitHub Access Token',
-      tokenRequired: 'Please enter GitHub access token',
-      tokenExtra: 'Personal access token with repo and gist permissions (both are required)',
-      tokenPlaceholder: 'Enter GitHub access token',
-      owner: 'Repository Owner (Optional)',
-      ownerRequired: 'Please enter repository owner',
-      ownerExtra: 'Your GitHub username or organization name, can be empty if only used for sync',
-      ownerPlaceholder: 'Enter repository owner (optional)',
-      repo: 'Repository Name (Optional)',
-      repoRequired: 'Please enter repository name',
-      repoExtra: 'GitHub repository name for storing images, can be empty if only used for sync',
-      repoPlaceholder: 'Enter repository name (optional)',
-      branch: 'Branch Name',
-      branchRequired: 'Please enter branch name',
-      branchExtra: 'Branch for storing images, usually main or master',
-      branchPlaceholder: 'Enter branch name',
-      path: 'Storage Path',
-      pathRequired: 'Please enter storage path',
-      pathExtra: 'Directory path in the repository for storing images, no leading slash needed',
-      pathPlaceholder: 'Enter storage path',
-      testConnection: 'Test Connection',
-      cdnSettings: 'CDN Settings',
-      customDomain: 'Custom CDN Domain',
-      customDomainExtra: 'Optional, custom CDN domain to replace GitHub raw links, e.g.: https://cdn.example.com',
-      customDomainPlaceholder: 'Enter custom CDN domain (optional)',
-      saveSettings: 'Save Settings',
-      saveChanges: 'Save Changes',
-      cancel: 'Cancel',
-      about: 'About GitHub Image Hosting',
-      aboutContent: 'This tool uses GitHub repository as image storage space, uploads images via GitHub API and generates links for blog use.',
-      howToGetToken: 'How to get GitHub access token:',
-      tokenStep1: 'Visit',
-      tokenStep1Link: 'GitHub token settings page',
-      tokenStep2: 'Click "Generate new token"',
-      tokenStep3: 'Select "repo" AND "gist" permission scopes (both are required)',
-      tokenStep4: 'Generate and copy the token',
-      tokenStep5: 'Paste the token into the GitHub access token input box above',
-      languageSettings: 'Language Settings',
-      languageLabel: 'Interface Language',
-      errorMessage: 'Please fill in GitHub token, owner and repository name first',
-      connectionSuccess: 'Connection successful! Your GitHub settings are working properly',
-      branchNotExist: 'Branch "{branch}" does not exist, please create this branch or use an existing branch',
-      connectionFailed: 'Connection failed: {error}',
-      saveSuccess: 'Settings saved',
-      saveFailed: 'Failed to save settings',
-      profileSaveSuccess: 'Configuration saved',
-      profileSaveFailed: 'Failed to save configuration failed',
-      profileDeleteSuccess: 'Configuration deleted',
-      profileSetActiveSuccess: 'Active configuration switched',
-      syncSettings: 'Cloud Sync Settings',
-      enableSync: 'Enable Cloud Sync',
-      enableSyncExtra: 'When enabled, your settings and upload history will be saved in GitHub Gist for multi-device sync',
-      pullFromCloud: 'Pull from Cloud',
-      pullFromCloudTooltip: 'Overwrite local data with data from the cloud. This is irreversible.',
-      pushToCloud: 'Push to Cloud',
-      pushToCloudTooltip: 'Overwrite cloud data with local data. This is irreversible.',
-      syncStatus: 'Sync Status',
-      syncInitialized: 'Initialized',
-      syncNotInitialized: 'Not Initialized',
-      lastSynced: 'Last Synced',
-      syncError: 'Sync Error',
-      syncInProgress: 'Syncing...',
-      syncSuccess: 'Sync Successful',
-      syncRequired: 'Sync Required',
-      syncPermissions: 'Gist Permission Required',
-      syncPermissionsExtra: 'Ensure your GitHub token has gist permission to use cloud sync feature. If you encounter a "Not Found" error, check if your token has gist permission.'
-    }
+  const t = {
+    title: '设置',
+    subtitle: '配置您的GitHub仓库信息和自定义CDN链接',
+    githubSettings: 'GitHub仓库配置',
+    repoConfigs: '仓库配置列表',
+    addRepoConfig: '添加配置',
+    editRepoConfig: '编辑配置',
+    configName: '配置名称',
+    configNamePlaceholder: '例如：个人博客图床',
+    configNameRequired: '请输入配置名称',
+    active: '当前使用',
+    setActive: '设为当前',
+    edit: '编辑',
+    delete: '删除',
+    deleteConfirm: '确定要删除此配置吗？',
+    token: 'GitHub访问令牌',
+    tokenRequired: '请输入GitHub访问令牌',
+    tokenExtra: '需要具有repo和gist权限的个人访问令牌（Personal Access Token）',
+    tokenPlaceholder: '输入GitHub访问令牌',
+    owner: '仓库所有者 (可选)',
+    ownerRequired: '请输入仓库所有者',
+    ownerExtra: '您的GitHub用户名或组织名称，如果仅用于同步设置，可以留空',
+    ownerPlaceholder: '输入仓库所有者 (可选)',
+    repo: '仓库名称 (可选)',
+    repoRequired: '请输入仓库名称',
+    repoExtra: '用于存储图片的GitHub仓库名称，如果仅用于同步设置，可以留空',
+    repoPlaceholder: '输入仓库名称 (可选)',
+    branch: '分支名称',
+    branchRequired: '请输入分支名称',
+    branchExtra: '存储图片的分支，通常为main或master',
+    branchPlaceholder: '输入分支名称',
+    path: '存储路径',
+    pathRequired: '请输入存储路径',
+    pathExtra: '仓库中存储图片的目录路径，不需要前导斜杠',
+    pathPlaceholder: '输入存储路径',
+    testConnection: '测试连接',
+    cdnSettings: 'CDN设置',
+    customDomain: '自定义CDN域名',
+    customDomainExtra: '可选，用于替代GitHub原始链接的自定义CDN域名，例如：https://cdn.example.com',
+    customDomainPlaceholder: '输入自定义CDN域名（可选）',
+    saveSettings: '保存设置',
+    saveChanges: '保存更改',
+    cancel: '取消',
+    about: '关于GitHub图床',
+    aboutContent: '本工具使用GitHub仓库作为图片存储空间，通过GitHub API上传图片并生成可用于博客的链接。',
+    howToGetToken: '如何获取GitHub访问令牌：',
+    tokenStep1: '访问',
+    tokenStep1Link: 'GitHub令牌设置页面',
+    tokenStep2: '点击 "Generate new token" (生成新令牌)',
+    tokenStep3: '选择 "repo" 和 "gist" 权限范围（必须同时选择这两项权限）',
+    tokenStep4: '生成并复制令牌',
+    tokenStep5: '将令牌粘贴到上方的GitHub访问令牌输入框中',
+    errorMessage: '请先填写GitHub令牌、所有者和仓库名',
+    connectionSuccess: '连接成功！您的GitHub设置正常工作',
+    branchNotExist: '分支 "{branch}" 不存在，请创建此分支或使用现有分支',
+    connectionFailed: '连接失败: {error}',
+    saveSuccess: '设置已保存',
+    saveFailed: '保存设置失败',
+    profileSaveSuccess: '配置已保存',
+    profileSaveFailed: '配置保存失败',
+    profileDeleteSuccess: '配置已删除',
+    profileSetActiveSuccess: '已切换活动配置',
+    syncSettings: '云同步设置',
+    enableSync: '启用云同步',
+    enableSyncExtra: '启用后，您的设置和上传历史将保存在GitHub Gist中，可在多设备间同步',
+    pullFromCloud: '从云端恢复',
+    pullFromCloudTooltip: '用云端的数据覆盖本地的所有配置和历史记录。此操作不可逆。',
+    pushToCloud: '上传到云端',
+    pushToCloudTooltip: '用本地的所有配置和历史记录覆盖云端数据。此操作不可逆。',
+    syncStatus: '同步状态',
+    syncInitialized: '已初始化',
+    syncNotInitialized: '未初始化',
+    lastSynced: '上次同步时间',
+    syncError: '同步错误',
+    syncInProgress: '正在同步...',
+    syncSuccess: '同步成功',
+    syncRequired: '需要同步',
+    syncPermissions: '需要gist权限',
+    syncPermissionsExtra: '确保您的GitHub令牌具有gist权限，以便使用云同步功能。如果遇到"Not Found"错误，请检查您的令牌是否有gist权限。'
   };
-  
-  // 获取当前语言的文本
-  const t = texts[settings.language || 'zh'];
 
   // 初始化表单值
   useEffect(() => {
     // 全局设置表单
     form.setFieldsValue({
-      language: settings.language,
       enableSync: settings.enableSync,
     });
   }, [form, settings]);
@@ -368,13 +276,6 @@ const Settings = () => {
 
     await persistSettings(newSettings);
     message.success(t.profileSetActiveSuccess);
-  };
-  
-  // 切换语言
-  const handleLanguageChange = (e) => {
-    const newLanguage = e.target.value;
-    const newSettings = { ...settings, language: newLanguage };
-    persistSettings(newSettings);
   };
   
   // 切换云同步
@@ -699,7 +600,6 @@ const Settings = () => {
               form={form}
               layout="vertical"
               initialValues={{
-                language: settings.language,
                 enableSync: settings.enableSync,
               }}
             >
@@ -740,24 +640,6 @@ const Settings = () => {
                 className="sync-error-alert"
               />
             )}
-          </Card>
-          
-          {/* 语言设置 */}
-          <Card 
-            title={<><GlobalOutlined /> {t.languageSettings}</>} 
-            className="settings-card"
-            size="small"
-          >
-            <Radio.Group 
-              onChange={handleLanguageChange} 
-              value={settings.language}
-              optionType="button" 
-              buttonStyle="solid"
-              className="language-selector"
-            >
-              <Radio.Button value="zh">中文</Radio.Button>
-              <Radio.Button value="en">English</Radio.Button>
-            </Radio.Group>
           </Card>
           
           {/* 关于信息 */}

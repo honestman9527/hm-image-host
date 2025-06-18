@@ -29,83 +29,42 @@ const ImageManager = () => {
   const { isInitialized, isSyncing, deleteHistoryRecord } = useSync();
   
   // 语言文本
-  const texts = {
-    zh: {
-      title: '图片管理',
-      subtitle: '查看和管理您上传的所有图片，复制链接以便在博客中使用',
-      search: '搜索图片名称',
-      noImages: '暂无上传的图片',
-      noMatchingImages: '没有找到匹配的图片',
-      size: '大小',
-      uploadTime: '上传时间',
-      copyLink: '复制链接',
-      deleteRecord: '删除记录',
-      deleteConfirmTitle: '确定要删除这条记录吗？',
-      deleteConfirmDesc: '删除后将无法恢复，但不会从GitHub仓库中删除图片。',
-      confirm: '确定',
-      cancel: '取消',
-      copySuccess: '链接已复制到剪贴板',
-      copyFailed: '复制失败',
-      deleteSuccess: '记录已删除',
-      startDate: '开始日期',
-      endDate: '结束日期',
-      clearFilters: '清除筛选',
-      originalLink: '原始链接',
-      urlFormat: 'URL格式',
-      markdownFormat: 'Markdown格式',
-      markdownWithLinkFormat: 'Markdown带链接格式',
-      htmlFormat: 'HTML格式',
-      bbcodeFormat: 'BBCode格式',
-      gridView: '网格视图',
-      timelineView: '时间线视图',
-      kb: 'KB',
-      preview: '预览',
-      syncFromCloud: '从云端同步',
-      syncingFromCloud: '正在从云端同步...',
-      syncSuccess: '同步成功',
-      syncFailed: '同步失败',
-      cloudSyncDisabled: '云同步未启用'
-    },
-    en: {
-      title: 'Image Manager',
-      subtitle: 'View and manage all your uploaded images, copy links for use in blogs',
-      search: 'Search image name',
-      noImages: 'No uploaded images',
-      noMatchingImages: 'No matching images found',
-      size: 'Size',
-      uploadTime: 'Upload Time',
-      copyLink: 'Copy Link',
-      deleteRecord: 'Delete Record',
-      deleteConfirmTitle: 'Are you sure you want to delete this record?',
-      deleteConfirmDesc: 'The record cannot be recovered after deletion, but the image will not be deleted from the GitHub repository.',
-      confirm: 'Confirm',
-      cancel: 'Cancel',
-      copySuccess: 'Link copied to clipboard',
-      copyFailed: 'Copy failed',
-      deleteSuccess: 'Record deleted',
-      startDate: 'Start Date',
-      endDate: 'End Date',
-      clearFilters: 'Clear Filters',
-      originalLink: 'Original Link',
-      urlFormat: 'URL Format',
-      markdownFormat: 'Markdown Format',
-      markdownWithLinkFormat: 'Markdown with Link Format',
-      htmlFormat: 'HTML Format',
-      bbcodeFormat: 'BBCode Format',
-      gridView: 'Grid View',
-      timelineView: 'Timeline View',
-      kb: 'KB',
-      preview: 'Preview',
-      syncFromCloud: 'Sync from Cloud',
-      syncingFromCloud: 'Syncing from cloud...',
-      syncSuccess: 'Sync successful',
-      syncFailed: 'Sync failed',
-      cloudSyncDisabled: 'Cloud sync disabled'
-    }
+  const t = {
+    title: '图片管理',
+    subtitle: '查看和管理您上传的所有图片，复制链接以便在博客中使用',
+    search: '搜索图片名称',
+    noImages: '暂无上传的图片',
+    noMatchingImages: '没有找到匹配的图片',
+    size: '大小',
+    uploadTime: '上传时间',
+    copyLink: '复制链接',
+    deleteRecord: '删除记录',
+    deleteConfirmTitle: '确定要删除这条记录吗？',
+    deleteConfirmDesc: '删除后将无法恢复，但不会从GitHub仓库中删除图片。',
+    confirm: '确定',
+    cancel: '取消',
+    copySuccess: '链接已复制到剪贴板',
+    copyFailed: '复制失败',
+    deleteSuccess: '记录已删除',
+    startDate: '开始日期',
+    endDate: '结束日期',
+    clearFilters: '清除筛选',
+    originalLink: '原始链接',
+    urlFormat: 'URL格式',
+    markdownFormat: 'Markdown格式',
+    markdownWithLinkFormat: 'Markdown带链接格式',
+    htmlFormat: 'HTML格式',
+    bbcodeFormat: 'BBCode格式',
+    gridView: '网格视图',
+    timelineView: '时间线视图',
+    kb: 'KB',
+    preview: '预览',
+    syncFromCloud: '从云端同步',
+    syncingFromCloud: '正在从云端同步...',
+    syncSuccess: '同步成功',
+    syncFailed: '同步失败',
+    cloudSyncDisabled: '云同步未启用'
   };
-  
-  // 获取当前语言的文本
-  const t = texts[settings?.language || 'zh'];
   
   const pageSize = 12;
 
@@ -496,7 +455,7 @@ const ImageManager = () => {
           <Button onClick={clearFilters}>{t.clearFilters}</Button>
           <Dropdown overlay={linkFormatMenu} trigger={['click']}>
             <Button style={{ minWidth: 140 }}>
-              {texts.zh[selectedFormat + 'Format'] || t.urlFormat} <DownOutlined />
+              {t[selectedFormat + 'Format'] || t.urlFormat} <DownOutlined />
             </Button>
           </Dropdown>
           <div style={{ flex: 1, minWidth: '12px' }} />
