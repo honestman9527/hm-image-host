@@ -376,7 +376,7 @@ const UploadPage = () => {
       </Typography>
 
       {!isSettingsComplete() && (
-        <Card className="settings-reminder">
+        <Card className="settings-reminder theme-adaptive-card">
           <SettingOutlined style={{ fontSize: '24px', marginRight: '8px' }} />
           <div>
             <p>{t.settingsReminder}</p>

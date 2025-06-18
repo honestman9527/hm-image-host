@@ -428,20 +428,6 @@ const Settings = () => {
     return new Date(date).toLocaleString();
   };
 
-  const pageTitle = (
-    <div className="page-title-container">
-      <Button 
-        type="text" 
-        icon={<ArrowLeftOutlined />} 
-        onClick={() => navigate('/')}
-        className="back-button"
-      >
-        返回
-      </Button>
-      <Title level={3} style={{ margin: 0 }}>{t.title}</Title>
-    </div>
-  );
-
   // 生成配置卡片内容的函数
   const renderProfileCardContent = (profile) => {
     // 准备详细信息的弹出内容
@@ -509,13 +495,14 @@ const Settings = () => {
   };
 
   return (
-    <div className="settings-container">
-      <Card 
-        title={pageTitle} 
-        bordered={false} 
-        className="settings-card-main"
-        size="small"
-      >
+    <div className="settings-container full-width">
+      <div className="settings-content-wrapper">
+        <Button 
+          type="text" 
+          icon={<ArrowLeftOutlined />} 
+          onClick={() => navigate('/')}
+          className="back-button"
+        />
         <Paragraph>{t.subtitle}</Paragraph>
         
         {/* GitHub 配置部分 */}
@@ -702,7 +689,7 @@ const Settings = () => {
             </Popover>
           </Card>
         </div>
-      </Card>
+      </div>
 
       {/* 新增/编辑配置的模态框 */}
       <Modal

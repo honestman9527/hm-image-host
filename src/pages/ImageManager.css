@@ -1,9 +1,25 @@
 /* ImageManager页面样式 - 整合了Gallery和History的样式 */
 .image-manager-container {
-  width: 100%;
-  max-width: 90%;
   margin: 0 auto;
-  padding: 20px;
+  width: 100%;
+  padding: 0;
+}
+
+.image-manager-container.full-width {
+  max-width: 100%;
+}
+
+.manager-content-wrapper {
+  max-width: 95%;
+  margin: 0 auto;
+  padding: 0 16px 24px;
+  background: var(--component-background);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 24px;
+  margin-top: 16px;
+  margin-bottom: 16px;
+  position: relative;
 }
 
 .manager-card {
@@ -20,11 +36,15 @@
   display: flex;
   align-items: center;
   gap: 16px;
+  padding: 0;
 }
 
 .back-button {
   color: var(--text-color) !important;
   font-size: 16px;
+  position: absolute;
+  top: 16px;
+  left: 16px;
 }
 
 .controls-container {
@@ -339,7 +359,19 @@
 /* 响应式样式 */
 @media (max-width: 992px) {
   .image-manager-container {
-    padding: 12px;
+    padding: 0;
+  }
+  
+  .manager-content-wrapper {
+    max-width: 100%;
+    padding: 20px 12px;
+    border-radius: 8px;
+    margin: 12px;
+  }
+  
+  .back-button {
+    top: 12px;
+    left: 12px;
   }
   
   .image-grid {

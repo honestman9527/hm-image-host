@@ -14,9 +14,15 @@
 .settings-reminder {
   display: flex;
   align-items: center;
-  margin-bottom: 20px;
-  background-color: #fffbe6;
-  border: 1px solid #ffe58f;
+  padding: 16px;
+  margin-top: 24px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid #e8e8e8;
+}
+
+.settings-reminder p {
+  margin-bottom: 8px;
 }
 
 .upload-options {
@@ -169,4 +175,25 @@
   .file-items {
     grid-template-columns: 1fr;
   }
+}
+
+/* 适应亮暗主题的卡片 */
+.theme-adaptive-card {
+  background-color: var(--component-background) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+/* 亮暗主题变量 */
+:root {
+  --component-background: #fff;
+  --border-color: #e0e0e0;
+  --text-color: rgba(0, 0, 0, 0.88);
+  --text-color-secondary: rgba(0, 0, 0, 0.65);
+}
+
+[data-theme='dark'] {
+  --component-background: #181818;
+  --border-color: #333;
+  --text-color: rgba(255, 255, 255, 0.88);
+  --text-color-secondary: rgba(255, 255, 255, 0.65);
 }

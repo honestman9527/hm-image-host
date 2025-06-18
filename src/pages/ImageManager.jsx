@@ -418,24 +418,15 @@ const ImageManager = () => {
     </div>
   );
 
-  // 居中标题
-  const pageTitle = (
-    <div className="page-title-container center-title">
-      <Button 
-        type="text" 
-        icon={<ArrowLeftOutlined />} 
-        onClick={() => navigate('/')}
-        className="back-button"
-      >
-        返回
-      </Button>
-      <Title level={2} style={{ margin: 0, flex: 1, textAlign: 'center' }}>{t.title}</Title>
-    </div>
-  );
-
   return (
-    <div className="image-manager-container">
-      <Card title={pageTitle} bordered={false} className="manager-card">
+    <div className="image-manager-container full-width">
+      <div className="manager-content-wrapper">
+        <Button 
+          type="text" 
+          icon={<ArrowLeftOutlined />} 
+          onClick={() => navigate('/')}
+          className="back-button"
+        />
         <Paragraph style={{ textAlign: 'center' }}>{t.subtitle}</Paragraph>
         <div className="controls-container-row">
           <Search
@@ -464,7 +455,7 @@ const ImageManager = () => {
             <Radio.Button value="timeline">{t.timelineView}</Radio.Button>
           </Radio.Group>
         </div>
-      </Card>
+      </div>
       {filteredImages.length === 0 ? (
         <Empty
           description={
