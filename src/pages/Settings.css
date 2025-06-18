@@ -96,6 +96,19 @@
   border: 1px solid var(--border-color) !important;
   transition: all 0.3s ease;
   overflow: hidden;
+  cursor: pointer;
+}
+
+.profile-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.profile-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
 }
 
 .profile-card-title {
@@ -103,6 +116,12 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 150px;
+}
+
+.token-status {
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
 }
 
 .active-profile {
@@ -136,8 +155,8 @@
   text-overflow: ellipsis;
 }
 
-/* 配置卡片操作区域 */
-.profile-card-actions {
+/* 活动配置标记 */
+.profile-active-badge {
   margin-top: 12px;
   display: flex;
   justify-content: flex-end;

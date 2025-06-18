@@ -469,18 +469,11 @@ const Settings = () => {
           </Tooltip>
         </div>
       )}
-      <div className="profile-card-actions">
-        {settings.activeProfileId === profile.id ? (
+      {settings.activeProfileId === profile.id && (
+        <div className="profile-active-badge">
           <Badge status="processing" text={t.active} />
-        ) : (
-          <Button 
-            size="small" 
-            onClick={() => handleSetActiveProfile(profile.id)}
-          >
-            {t.setActive}
-          </Button>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 
@@ -510,25 +503,24 @@ const Settings = () => {
             </Button>
           </div>
           
-          {!import.meta.env.VITE_GITHUB_TOKEN && (
-            <Alert
-              message="GitHub令牌未配置"
-              description="请联系管理员在Cloudflare Pages中配置VITE_GITHUB_TOKEN环境变量。"
-              type="warning"
-              showIcon
-              style={{ marginBottom: 16 }}
+          <Tooltip 
+            title={import.meta.env.VITE_GITHUB_TOKEN ? 
+              "令牌已从环境变量中加载，无需手动输入。" : 
+              "请联系管理员在Cloudflare Pages中配置VITE_GITHUB_TOKEN环境变量。"
+            }
+            placement="right"
+          >
+            <Badge 
+              status={import.meta.env.VITE_GITHUB_TOKEN ? "success" : "warning"} 
+              text={
+                <span className="token-status">
+                  GitHub令牌{import.meta.env.VITE_GITHUB_TOKEN ? "已配置" : "未配置"}
+                  <InfoCircleOutlined style={{ marginLeft: 8 }} />
+                </span>
+              } 
+              style={{ marginBottom: 16, cursor: 'pointer' }}
             />
-          )}
-          
-          {import.meta.env.VITE_GITHUB_TOKEN && (
-            <Alert
-              message="GitHub令牌已配置"
-              description="令牌已从环境变量中加载，无需手动输入。"
-              type="success"
-              showIcon
-              style={{ marginBottom: 16 }}
-            />
-          )}
+          </Tooltip>
 
           <div className="profiles-grid">
             {settings.profiles.map(profile => (
@@ -536,37 +528,47 @@ const Settings = () => {
                 key={profile.id}
                 className={`profile-card ${settings.activeProfileId === profile.id ? 'active-profile' : ''}`}
                 size="small"
+                hoverable
+                onClick={() => settings.activeProfileId !== profile.id && handleSetActiveProfile(profile.id)}
                 title={
-                  <Tooltip title={profile.name}>
-                    <div className="profile-card-title">{profile.name}</div>
-                  </Tooltip>
-                }
-                extra={
-                  <Space>
-                    <Tooltip title={t.edit}>
-                      <Button 
-                        type="text" 
-                        icon={<EditOutlined />} 
-                        onClick={() => showProfileModal(profile)}
-                        size="small"
-                      />
+                  <div className="profile-card-header">
+                    <Tooltip title={profile.name}>
+                      <div className="profile-card-title">{profile.name}</div>
                     </Tooltip>
-                    <Tooltip title={t.delete}>
-                      <Popconfirm
-                        title={t.deleteConfirm}
-                        onConfirm={() => handleDeleteProfile(profile.id)}
-                        okText="是"
-                        cancelText="否"
-                      >
+                    <Space>
+                      <Tooltip title={t.edit}>
                         <Button 
                           type="text" 
-                          danger 
-                          icon={<DeleteOutlined />}
-                          size="small" 
+                          icon={<EditOutlined />} 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            showProfileModal(profile);
+                          }}
+                          size="small"
                         />
-                      </Popconfirm>
-                    </Tooltip>
-                  </Space>
+                      </Tooltip>
+                      <Tooltip title={t.delete}>
+                        <Popconfirm
+                          title={t.deleteConfirm}
+                          onConfirm={(e) => {
+                            e.stopPropagation();
+                            handleDeleteProfile(profile.id);
+                          }}
+                          onCancel={(e) => e.stopPropagation()}
+                          okText="是"
+                          cancelText="否"
+                        >
+                          <Button 
+                            type="text" 
+                            danger 
+                            icon={<DeleteOutlined />}
+                            onClick={(e) => e.stopPropagation()}
+                            size="small" 
+                          />
+                        </Popconfirm>
+                      </Tooltip>
+                    </Space>
+                  </div>
                 }
               >
                 {renderProfileCardContent(profile)}
