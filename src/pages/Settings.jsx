@@ -443,39 +443,70 @@ const Settings = () => {
   );
 
   // 生成配置卡片内容的函数
-  const renderProfileCardContent = (profile) => (
-    <div className="profile-card-content">
-      <div className="profile-info-row">
-        <Text strong>Repo:</Text> 
-        <Tooltip title={`${profile.owner}/${profile.repo}`}>
-          <Text ellipsis>{profile.owner}/{profile.repo}</Text>
-        </Tooltip>
-      </div>
-      <div className="profile-info-row">
-        <Text strong>Branch:</Text> 
-        <Text>{profile.branch}</Text>
-      </div>
-      <div className="profile-info-row">
-        <Text strong>Path:</Text> 
-        <Tooltip title={profile.path}>
-          <Text ellipsis>{profile.path}</Text>
-        </Tooltip>
-      </div>
-      {profile.customDomain && (
+  const renderProfileCardContent = (profile) => {
+    // 准备详细信息的弹出内容
+    const detailContent = (
+      <div className="profile-details">
         <div className="profile-info-row">
-          <Text strong>CDN:</Text> 
-          <Tooltip title={profile.customDomain}>
-            <Text ellipsis>{profile.customDomain}</Text>
-          </Tooltip>
+          <Text strong>Repo:</Text> 
+          <Text>{profile.owner}/{profile.repo}</Text>
         </div>
-      )}
-      {settings.activeProfileId === profile.id && (
-        <div className="profile-active-badge">
-          <Badge status="processing" text={t.active} />
+        <div className="profile-info-row">
+          <Text strong>Branch:</Text> 
+          <Text>{profile.branch}</Text>
         </div>
-      )}
-    </div>
-  );
+        <div className="profile-info-row">
+          <Text strong>Path:</Text> 
+          <Text>{profile.path}</Text>
+        </div>
+        {profile.customDomain && (
+          <div className="profile-info-row">
+            <Text strong>CDN:</Text> 
+            <Text>{profile.customDomain}</Text>
+          </div>
+        )}
+      </div>
+    );
+    
+    return (
+      <div className="profile-card-content">
+        {/* 简化的信息显示 */}
+        <div className="profile-main-info">
+          <div className="profile-repo">
+            <GithubOutlined className="info-icon" />
+            <Text ellipsis>{profile.owner}/{profile.repo}</Text>
+          </div>
+          {profile.customDomain && (
+            <div className="profile-cdn">
+              <LinkOutlined className="info-icon" />
+              <Text ellipsis className="cdn-text">{profile.customDomain}</Text>
+            </div>
+          )}
+        </div>
+        
+        <div className="profile-actions">
+          {/* 活动标记 */}
+          {settings.activeProfileId === profile.id && (
+            <div className="profile-active-badge">
+              <Badge status="processing" text={t.active} />
+            </div>
+          )}
+          
+          {/* 详细信息按钮 */}
+          <Popover 
+            content={detailContent} 
+            title="详细配置信息" 
+            trigger={['hover', 'click']}
+            placement="right"
+          >
+            <Button type="link" size="small" className="detail-button">
+              详细信息
+            </Button>
+          </Popover>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="settings-container">
@@ -627,8 +658,9 @@ const Settings = () => {
               </div>
               
               <div className="sync-status-item">
+                <Text type="secondary">最近同步:</Text>
                 <Tooltip title={lastSynced ? formatDateTime(lastSynced) : '-'}>
-                  <Text>{lastSynced ? '最近同步: ' + new Date(lastSynced).toLocaleDateString() : '-'}</Text>
+                  <Text>{lastSynced ? new Date(lastSynced).toLocaleDateString() : '-'}</Text>
                 </Tooltip>
               </div>
             </div>
@@ -666,7 +698,7 @@ const Settings = () => {
               trigger="click"
               placement="bottom"
             >
-              <Button type="link">{t.howToGetToken}</Button>
+              <Button type="link" size="small" icon={<InfoCircleOutlined />}>{t.howToGetToken}</Button>
             </Popover>
           </Card>
         </div>

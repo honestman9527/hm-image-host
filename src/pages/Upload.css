@@ -1,6 +1,7 @@
 /* Upload页面样式 */
 .upload-container {
-  max-width: 1200px;
+  width: 100%;
+  max-width: 90%;
   margin: 0 auto;
   padding: 20px;
 }

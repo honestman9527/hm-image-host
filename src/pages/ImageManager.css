@@ -1,7 +1,7 @@
 /* ImageManager页面样式 - 整合了Gallery和History的样式 */
 .image-manager-container {
   width: 100%;
-  max-width: 1200px;
+  max-width: 90%;
   margin: 0 auto;
   padding: 20px;
 }
