@@ -23,6 +23,41 @@ const UploadPage = () => {
 
   const navigate = useNavigate();
   const { isInitialized, syncHistoryRecord } = useSync();
+  
+  // 文本变量
+  const t = {
+    title: '上传图片',
+    subtitle: '将图片上传到您的GitHub仓库，获取可用于博客的图片链接',
+    settingsReminder: '您需要先完成GitHub设置才能上传图片',
+    goToSettings: '前往设置',
+    uploadOptions: '上传选项',
+    compressImages: '压缩图片',
+    compressImagesDesc: '开启后将压缩图片以节省空间',
+    convertToWebP: '转换为WebP格式',
+    convertToWebPDesc: '开启后将所有图片转换为WebP格式，体积更小（推荐用于PNG图片）',
+    dropzoneText: '点击或拖拽图片到此区域上传',
+    dropzoneSubText: '支持单个或批量上传',
+    fileListTitle: '待上传文件',
+    startUpload: '开始上传',
+    uploading: '上传中...',
+    fileStatusReady: '待上传',
+    fileStatusUploading: '上传中...',
+    fileStatusSuccess: '上传成功',
+    fileStatusError: '上传失败',
+    copyLink: '复制链接',
+    remove: '移除',
+    kb: 'KB',
+    settingsIncomplete: '请先在设置页面中配置并指定一个活动的仓库',
+    noFilesSelected: '请先选择要上传的图片',
+    allFilesUploaded: '所有图片上传成功！',
+    partialUploadSuccess: '上传完成，{success}/{total} 个文件成功',
+    linkCopied: '链接已复制到剪贴板',
+    copyFailed: '复制失败: {error}',
+    uploadFailed: '上传失败: {fileName}',
+    saveHistoryError: '保存历史记录时出错',
+    on: '开启',
+    off: '关闭'
+  };
 
   useEffect(() => {
     // 封装加载逻辑，以便复用
@@ -222,7 +257,7 @@ const UploadPage = () => {
         return newFiles;
       });
       
-      message.error(`上传失败: ${fileObj.name}`);
+      message.error(t.uploadFailed.replace('{fileName}', fileObj.name));
       return false;
     }
   };
@@ -268,19 +303,19 @@ const UploadPage = () => {
       }
     } catch (error) {
       console.error('保存上传历史到本地失败:', error);
-      message.error('保存历史记录时出错');
+      message.error(t.saveHistoryError);
     }
   };
 
   // 开始上传所有文件
   const handleUpload = async () => {
     if (!isSettingsComplete() || !activeProfile) {
-      message.error('请先在设置页面中配置并指定一个活动的仓库');
+      message.error(t.settingsIncomplete);
       return;
     }
     
     if (files.length === 0) {
-      message.warning('请先选择要上传的图片');
+      message.warning(t.noFilesSelected);
       return;
     }
     
@@ -307,9 +342,9 @@ const UploadPage = () => {
     setUploading(false);
     
     if (successCount === files.length) {
-      message.success('所有图片上传成功！');
+      message.success(t.allFilesUploaded);
     } else {
-      message.warning(`上传完成，${successCount}/${files.length} 个文件成功`);
+      message.warning(t.partialUploadSuccess.replace('{success}', successCount).replace('{total}', files.length));
     }
   };
 
@@ -327,16 +362,16 @@ const UploadPage = () => {
   // 复制链接
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text)
-      .then(() => message.success('链接已复制到剪贴板'))
-      .catch(err => message.error('复制失败: ' + err));
+      .then(() => message.success(t.linkCopied))
+      .catch(err => message.error(t.copyFailed.replace('{error}', err)));
   };
 
   return (
     <div className="upload-container">
       <Typography className="upload-header">
-        <Title level={2}>上传图片</Title>
+        <Title level={2}>{t.title}</Title>
         <Paragraph>
-          将图片上传到您的GitHub仓库，获取可用于博客的图片链接
+          {t.subtitle}
         </Paragraph>
       </Typography>
 
@@ -344,32 +379,32 @@ const UploadPage = () => {
         <Card className="settings-reminder">
           <SettingOutlined style={{ fontSize: '24px', marginRight: '8px' }} />
           <div>
-            <p>您需要先完成GitHub设置才能上传图片</p>
-            <Button type="primary" onClick={() => navigate('/settings')}>前往设置</Button>
+            <p>{t.settingsReminder}</p>
+            <Button type="primary" onClick={() => navigate('/settings')}>{t.goToSettings}</Button>
           </div>
         </Card>
       )}
 
-      <Card title="上传选项" className="upload-options">
+      <Card title={t.uploadOptions} className="upload-options">
         <Form layout="horizontal">
-          <Form.Item label="压缩图片">
+          <Form.Item label={t.compressImages}>
             <Switch 
               checked={compressImages} 
               onChange={setCompressImages} 
-              checkedChildren="开启" 
-              unCheckedChildren="关闭"
+              checkedChildren={t.on} 
+              unCheckedChildren={t.off}
             />
-            <span className="option-description">开启后将压缩图片以节省空间</span>
+            <span className="option-description">{t.compressImagesDesc}</span>
           </Form.Item>
-          <Form.Item label="转换为WebP格式">
+          <Form.Item label={t.convertToWebP}>
             <Switch 
               checked={convertToWebP} 
               onChange={setConvertToWebP} 
-              checkedChildren="开启" 
-              unCheckedChildren="关闭"
+              checkedChildren={t.on} 
+              unCheckedChildren={t.off}
               disabled={!compressImages}
             />
-            <span className="option-description">开启后将所有图片转换为WebP格式，体积更小（推荐用于PNG图片）</span>
+            <span className="option-description">{t.convertToWebPDesc}</span>
           </Form.Item>
         </Form>
       </Card>
@@ -377,21 +412,21 @@ const UploadPage = () => {
       <div {...getRootProps({ className: 'dropzone' })}>
         <input {...getInputProps()} />
         <p><InboxOutlined style={{ fontSize: '48px' }} /></p>
-        <p className="main-text">点击或拖拽图片到此区域上传</p>
-        <p className="sub-text">支持单个或批量上传</p>
+        <p className="main-text">{t.dropzoneText}</p>
+        <p className="sub-text">{t.dropzoneSubText}</p>
       </div>
 
       {files.length > 0 && (
         <div className="file-list">
           <div className="file-list-header">
-            <h3>待上传文件 ({files.length})</h3>
+            <h3>{t.fileListTitle} ({files.length})</h3>
             <Button 
               type="primary" 
               onClick={handleUpload} 
               loading={uploading}
               disabled={!isSettingsComplete()}
             >
-              {uploading ? '上传中...' : '开始上传'}
+              {uploading ? t.uploading : t.startUpload}
             </Button>
           </div>
           
@@ -414,12 +449,12 @@ const UploadPage = () => {
                 </div>
                 <div className="file-info">
                   <div className="file-name">{file.name}</div>
-                  <div className="file-size">{(file.size / 1024).toFixed(1)} KB</div>
+                  <div className="file-size">{(file.size / 1024).toFixed(1)} {t.kb}</div>
                   <div className="file-status">
-                    {file.status === 'ready' && '待上传'}
-                    {file.status === 'uploading' && '上传中...'}
-                    {file.status === 'success' && '上传成功'}
-                    {file.status === 'error' && '上传失败'}
+                    {file.status === 'ready' && t.fileStatusReady}
+                    {file.status === 'uploading' && t.fileStatusUploading}
+                    {file.status === 'success' && t.fileStatusSuccess}
+                    {file.status === 'error' && t.fileStatusError}
                   </div>
                 </div>
                 <div className="file-actions">
@@ -428,7 +463,7 @@ const UploadPage = () => {
                       type="link" 
                       onClick={() => copyToClipboard(file.url)}
                     >
-                      复制链接
+                      {t.copyLink}
                     </Button>
                   ) : (
                     <Button 
@@ -437,7 +472,7 @@ const UploadPage = () => {
                       onClick={() => handleRemove(index)}
                       disabled={uploading}
                     >
-                      移除
+                      {t.remove}
                     </Button>
                   )}
                 </div>

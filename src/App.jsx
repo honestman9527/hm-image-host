@@ -15,6 +15,14 @@ function App() {
   const { theme: currentTheme, toggleTheme } = useTheme();
   const { isInitialized, initializeSync } = useSync()
 
+  // 文本变量
+  const t = {
+    title: 'HM 图床',
+    imageManager: '图片管理',
+    settings: '设置',
+    footer: 'HM 图床 ©{year} Created with React & Ant Design'
+  };
+
   // 自动同步逻辑
   useEffect(() => {
     const settingsStr = localStorage.getItem('github-settings');
@@ -33,13 +41,13 @@ function App() {
     {
       key: '/images',
       icon: <PictureOutlined />,
-      label: '图片管理',
+      label: t.imageManager,
       onClick: () => navigate('/images')
     },
     {
       key: '/settings',
       icon: <SettingOutlined />,
-      label: '设置',
+      label: t.settings,
       onClick: () => navigate('/settings')
     },
   ];
@@ -78,7 +86,7 @@ function App() {
             <Link to="/">
               <img src="/hm.png" alt="logo" className="logo-image" />
             </Link>
-            <Title level={4} className="app-title">HM 图床</Title>
+            <Title level={4} className="app-title">{t.title}</Title>
           </div>
           <Space>
             <Button 
@@ -96,7 +104,7 @@ function App() {
           <Outlet />
         </Content>
         <Footer className="app-footer">
-          HM 图床 ©{new Date().getFullYear()} Created with React & Ant Design
+          {t.footer.replace('{year}', new Date().getFullYear())}
         </Footer>
       </Layout>
     </ConfigProvider>

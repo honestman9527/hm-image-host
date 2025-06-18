@@ -166,13 +166,6 @@
   border: 1px solid rgba(255, 77, 79, 0.2) !important;
 }
 
-/* 语言选择器 */
-.language-selector {
-  display: flex;
-  justify-content: center;
-  width: 100%;
-}
-
 /* 模态框底部 */
 .modal-footer {
   display: flex;
