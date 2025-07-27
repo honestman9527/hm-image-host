@@ -91,17 +91,17 @@ const Settings = () => {
     owner: '仓库所有者 (可选)',
     ownerRequired: '请输入仓库所有者',
     ownerExtra: '您的GitHub用户名或组织名称，如果仅用于同步设置，可以留空',
-    ownerPlaceholder: '输入仓库所有者 (可选)',
+    ownerPlaceholder: '输入仓库所有者',
     repo: '仓库名称 (可选)',
     repoRequired: '请输入仓库名称',
     repoExtra: '用于存储图片的GitHub仓库名称，如果仅用于同步设置，可以留空',
-    repoPlaceholder: '输入仓库名称 (可选)',
+    repoPlaceholder: '输入仓库名称',
     branch: '分支名称',
     branchRequired: '请输入分支名称',
     branchExtra: '存储图片的分支，通常为main或master',
     branchPlaceholder: '输入分支名称',
     path: '存储路径',
-    pathRequired: '请输入存储路径',
+    pathRequired: '请输入存储路径(可选)',
     pathExtra: '仓库中存储图片的目录路径，不需要前导斜杠',
     pathPlaceholder: '输入存储路径',
     testConnection: '测试连接',
@@ -740,7 +740,7 @@ const Settings = () => {
           <Form.Item
             name="path"
             label={t.path}
-            rules={[{ required: true, message: t.pathRequired }]}
+            rules={[{ required: false}]}
             tooltip={t.pathExtra}
           >
             <Input placeholder={t.pathPlaceholder} />
