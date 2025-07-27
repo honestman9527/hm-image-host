@@ -218,9 +218,9 @@ const UploadPage = () => {
       let imageUrl;
       if (currentActiveProfile.customDomain) {
         const cdnBase = currentActiveProfile.customDomain.replace(/\/+$/, '');
-        imageUrl = `${cdnBase}/${currentActiveProfile.owner}/${currentActiveProfile.repo}/${currentActiveProfile.branch}/${filePath}`;
+        imageUrl = `${cdnBase}/${currentActiveProfile.repo}/${currentActiveProfile.branch}/${filePath}`;
       } else {
-        imageUrl = `https://raw.githubusercontent.com/${currentActiveProfile.owner}/${currentActiveProfile.repo}/${currentActiveProfile.branch}/${filePath}`;
+        imageUrl = `https://raw.githubusercontent.com/${currentActiveProfile.repo}/${currentActiveProfile.branch}/${filePath}`;
       }
       
       // 更新文件状态为成功
