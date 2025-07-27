@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
-import { Layout, Menu, Typography, ConfigProvider, theme, Button, Dropdown, Space } from 'antd'
+import { Layout, Menu, Typography, ConfigProvider, theme, Button, Dropdown, Space, Modal } from 'antd'
 import { UploadOutlined, PictureOutlined, SettingOutlined, MenuOutlined, SunOutlined, MoonOutlined } from '@ant-design/icons'
 import { useSync } from './contexts/SyncContext'
 import { useTheme } from './contexts/ThemeContext'
